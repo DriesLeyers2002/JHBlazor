@@ -1,0 +1,55 @@
+# Ignore directories and files related to build output and project settings
+**/bin/
+**/obj/
+**/.vs/
+*/.user
+*/.rsuser
+*/.suo
+*/.userosscache
+*/.sln.docstates
+.vscode/
+.idea/
+
+# Ignore specific to Blazor and .NET projects
+wwwroot/
+node_modules/
+dist/
+.publish/
+
+# Ignore logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Ignore configuration files that may contain sensitive information
+appsettings*.json
+.secrets/
+.env
+
+# Ignore dependency management files
+package-lock.json
+yarn.lock
+
+# Ignore IDE-specific directories and files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore build directories and files for various platforms
+*.nupkg
+*.snupkg
+
+# Ignore by default all hidden files and directories
+.*
+!.gitignore
+!.gitattributes
+
+# Ignore compiled dlls and pdbs
+*/.dll
+*/.pdb
