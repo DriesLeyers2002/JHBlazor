@@ -4,6 +4,7 @@
 @using Radzen
 @inject AppDbContext _dbContext
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 @rendermode InteractiveServer
 
 <PageTitle>Leden</PageTitle>
@@ -22,9 +23,14 @@
     </Columns>
 </RadzenDataGrid>
 
+<RadzenAlert @bind-Visible="visible" Title="Alert with Title" AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+    Alert with title
+</RadzenAlert>
+
 @code {
     private ICollection<User> users;
     private RadzenDataGrid<User> grid;
+    bool visible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,14 +52,21 @@
     private async Task OpenAddUserDialog()
     {
         Console.WriteLine("teststststst"); 
-        var result = await DialogService.OpenAsync<AddUserDialog>("Gebruiker toevoegen", null,
+        User result = await DialogService.OpenAsync<AddUserDialog>("Gebruiker toevoegen", null,
             new DialogOptions() { Width = "500px", Height = "400px" });
 
         if (result != null)
         {
-            _dbContext.Users.Add((User)result);
+            _dbContext.Users.Add(result);
             await _dbContext.SaveChangesAsync();
             await LoadUsersAsync();
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Gebruiker met succes toegevoegd!",
+                    Detail = $"U heeft met succes {result.FirstName} {result.LastName} toegevoegd."
+                });
         }
     }
 
