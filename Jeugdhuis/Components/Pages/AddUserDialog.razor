@@ -1,0 +1,28 @@
+﻿@page "/add-user-dialog"
+@using Jeugdhuis.Models
+@inject DialogService DialogService
+
+<EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <RadzenTextBox @bind-Value="user.FirstName" Placeholder="Voornaam" />
+    <RadzenTextBox @bind-Value="user.LastName" Placeholder="Achternaam" />
+    <RadzenTextBox @bind-Value="user.Email" Placeholder="Email" />
+    <RadzenTextBox @bind-Value="user.Address" Placeholder="Adres" />
+
+    <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" />
+    <RadzenButton Text="Annuleren" Click="CloseDialog" />
+</EditForm>
+
+@code {
+    private User user = new User();
+
+    private void HandleValidSubmit()
+    {
+        DialogService.Close(user);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+}

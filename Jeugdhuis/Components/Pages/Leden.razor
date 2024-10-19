@@ -1,0 +1,64 @@
+﻿@page "/leden"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@inject AppDbContext _dbContext
+@inject DialogService DialogService
+@rendermode InteractiveServer
+
+<PageTitle>Leden</PageTitle>
+
+<h1>Leden</h1>
+
+<RadzenButton Text="Gebruiker toevoegen" Click=@OpenAddUserDialog Icon="add" Style="margin-bottom: 20px;" />
+
+<RadzenDataGrid @ref="grid" Data="@users" TItem="User" RowSelect="@OnRowSelect" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="User" Property="Id" Title="ID" Width="50px" />
+        <RadzenDataGridColumn TItem="User" Property="FirstName" Title="Voornaam" />
+        <RadzenDataGridColumn TItem="User" Property="LastName" Title="Achternaam" />
+        <RadzenDataGridColumn TItem="User" Property="Email" Title="Email" />
+        <RadzenDataGridColumn TItem="User" Property="Address" Title="Adres" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private ICollection<User> users;
+    private RadzenDataGrid<User> grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        try
+        {
+            users = await _dbContext.Users.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching users: {ex.Message}");
+        }
+    }
+
+    private async Task OpenAddUserDialog()
+    {
+        Console.WriteLine("teststststst"); 
+        var result = await DialogService.OpenAsync<AddUserDialog>("Gebruiker toevoegen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            _dbContext.Users.Add((User)result);
+            await _dbContext.SaveChangesAsync();
+            await LoadUsersAsync();
+        }
+    }
+
+    private void OnRowSelect(User user)
+    {
+        Console.WriteLine($"Selected user: {user.FirstName} {user.LastName}");
+    }
+}
