@@ -44,7 +44,9 @@
     {
         try
         {
-            users = await _dbContext.Users.Where(x => x.Year == int.Parse(value)).ToListAsync();
+            Console.WriteLine(value);
+            var allUsers = await _dbContext.Users.ToListAsync();
+            users = allUsers.Where(x => x.Years.Contains(int.Parse(value))).ToList();
         }
         catch (Exception ex)
         {
@@ -56,18 +58,19 @@
     {
         try
         {
-            years = await _dbContext.Users
-                .Select(x => x.Year)
-                .Distinct()
-                .OrderByDescending(year => year)
-                .ToListAsync();
+            var users = await _dbContext.Users.ToListAsync();
+
+            years = users
+                .SelectMany(user => user.Years)  
+                .Distinct()                      
+                .OrderByDescending(year => year)  
+                .ToList();                        
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching years: {ex.Message}");
         }
     }
-
 
     private async Task OnYearChange(object value)
     {
@@ -82,7 +85,7 @@
 
         if (result != null)
         {
-            result.Year = DateTime.Now.Year;
+            result.Years.Add(DateTime.Now.Year);
 
             _dbContext.Users.Add(result);
             await _dbContext.SaveChangesAsync();

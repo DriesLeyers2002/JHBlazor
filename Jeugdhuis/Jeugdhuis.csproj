@@ -18,4 +18,10 @@
     <PackageReference Include="Radzen.Blazor" Version="5.3.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Components\Pages\Settings.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
 </Project>
