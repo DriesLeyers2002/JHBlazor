@@ -1,0 +1,52 @@
+﻿@page "/add-drink-to-stock-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext DbContext
+
+<RadzenFieldset Text="Voeg Drankje Toe aan Stock">
+    <EditForm Model="@stockItem" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenDropDown @bind-Value="stockItem.DrinkId" Data="@drinks" TextProperty="Name" ValueProperty="Id" Placeholder="Kies een Drank" Style="width: 100%;" />
+                <ValidationMessage For="@(() => stockItem.DrinkId)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenNumeric @bind-Value="stockItem.Quantity" Placeholder="Aantal" Min="1" Style="width: 100%;" />
+                <ValidationMessage For="@(() => stockItem.Quantity)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private StockItem stockItem = new StockItem();
+    private List<Drink> drinks;
+
+    protected override async Task OnInitializedAsync()
+    {
+        drinks = await DbContext.Drinks.Where(d => d.IsActive).ToListAsync(); 
+    }
+
+    private void HandleValidSubmit()
+    {
+        DialogService.Close(stockItem);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+}

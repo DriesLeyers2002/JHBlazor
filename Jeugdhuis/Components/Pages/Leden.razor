@@ -28,14 +28,9 @@
     </Columns>
 </RadzenDataGrid>
 
-<RadzenAlert @bind-Visible="visible" Title="Alert with Title" AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-    Alert with title
-</RadzenAlert>
-
 @code {
     private ICollection<User> users;
     private RadzenDataGrid<User> grid;
-    bool visible = false;
     string value = DateTime.Now.Year.ToString(); 
     IEnumerable<int> years;
 

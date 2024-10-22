@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Jeugdhuis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241022151522_AddSeedData")]
-    partial class AddSeedData
+    [Migration("20241022161433_Temp")]
+    partial class Temp
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -358,6 +358,45 @@ namespace Jeugdhuis.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Jeugdhuis.Models.Stock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Stocks");
+                });
+
+            modelBuilder.Entity("Jeugdhuis.Models.StockItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DrinkId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DrinkId");
+
+                    b.HasIndex("StockId");
+
+                    b.ToTable("StockItems");
+                });
+
             modelBuilder.Entity("Jeugdhuis.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -417,6 +456,30 @@ namespace Jeugdhuis.Migrations
                             LastName = "Johnson",
                             Year = 2024
                         });
+                });
+
+            modelBuilder.Entity("Jeugdhuis.Models.StockItem", b =>
+                {
+                    b.HasOne("Jeugdhuis.Models.Drink", "Drink")
+                        .WithMany()
+                        .HasForeignKey("DrinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jeugdhuis.Models.Stock", "Stock")
+                        .WithMany("DrinkStock")
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Drink");
+
+                    b.Navigation("Stock");
+                });
+
+            modelBuilder.Entity("Jeugdhuis.Models.Stock", b =>
+                {
+                    b.Navigation("DrinkStock");
                 });
 #pragma warning restore 612, 618
         }

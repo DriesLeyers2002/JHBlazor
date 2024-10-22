@@ -5,6 +5,8 @@ public class AppDbContext : DbContext
 {
     public DbSet<Drink> Drinks { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Stock> Stocks { get; set; }
+    public DbSet<StockItem> StockItems { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -16,14 +18,32 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Drink>(entity =>
         {
-            entity.HasKey(x => x.Id); 
-            entity.Property(x => x.Id).ValueGeneratedOnAdd(); 
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(x => x.Id); 
+            entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
+        });
+
+        modelBuilder.Entity<Stock>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.HasMany(s => s.DrinkStock)
+                  .WithOne(si => si.Stock)
+                  .HasForeignKey(si => si.StockId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StockItem>(entity =>
+        {
+            entity.HasKey(si => si.Id);
+            entity.HasOne(si => si.Drink)
+                  .WithMany()
+                  .HasForeignKey(si => si.DrinkId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Drink>().HasData(
