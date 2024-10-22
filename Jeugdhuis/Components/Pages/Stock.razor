@@ -1,0 +1,192 @@
+﻿@page "/stock"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject AppDbContext _dbContext
+
+<PageTitle>Voorraadbeheer</PageTitle>
+
+@if (lowStockItems.Any())
+{
+    <div class="alert alert-danger mt-4 text-center">
+        <h4>⚠️ Let op! Lage Voorraad:</h4>
+        <ul class="list-unstyled">
+            @foreach (var item in lowStockItems)
+            {
+                <li>@item.Name: nog maar @stock[item] over!</li>
+            }
+        </ul>
+    </div>
+}
+
+<h1 class="text-center my-4">Voorraadbeheer</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered text-center">
+        <thead class="thead-dark">
+            <tr>
+                <th>Drank/Snack</th>
+                <th>Huidige Voorraad</th>
+                <th>Actie</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in stock)
+            {
+                <tr>
+                    <td>@item.Key.Name</td>
+                    <td>@item.Value</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => DecreaseStock(item.Key)">-</button>
+                        <input type="number" @bind="manualStockChanges[item.Key]" min="0" class="form-control d-inline mx-2" style="width: 70px;" />
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => IncreaseStock(item.Key)">+</button>
+                        <button class="btn btn-sm btn-warning ml-2" @onclick="() => ConfirmStockUpdate(item.Key)">Pas Aan</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<h2 class="mt-5">Brouwer Bestelling</h2>
+<p>Voer de nieuwe hoeveelheid in die u hebt ontvangen van de brouwer:</p>
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered text-center">
+        <thead class="thead-dark">
+            <tr>
+                <th>Drank/Snack</th>
+                <th>Nieuwe Aantallen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in stock)
+            {
+                <tr>
+                    <td>@item.Key.Name</td>
+                    <td>
+                        <input type="number" @bind="brouwerOrder[item.Key]" min="0" class="form-control d-inline" style="width: 70px;" />
+                        <button class="btn btn-sm btn-success ml-2" @onclick="() => RestockItem(item.Key)">Bestelling Toevoegen</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (showConfirmation)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bevestiging vereist</h5>
+                    <button type="button" class="close" @onclick="CancelStockUpdate">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Ben je zeker dat je dit wilt aanpassen a sahbi?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmStockChange">Ja</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelStockUpdate">Nee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private Dictionary<Drink, int> stock = new Dictionary<Drink, int>();
+    private Dictionary<Drink, int> manualStockChanges = new Dictionary<Drink, int>();
+    private Dictionary<Drink, int> brouwerOrder = new Dictionary<Drink, int>();
+    private List<Drink> lowStockItems = new List<Drink>();
+    private Drink selectedDrinkForUpdate;
+    private bool showConfirmation = false;
+
+    private List<Drink> drinks = new List<Drink>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDrinks();
+
+
+        foreach (var drink in drinks)
+        {
+            stock[drink] = 100;
+            manualStockChanges[drink] = 0;
+            brouwerOrder[drink] = 0;
+        }
+
+        CheckLowStock();
+    }
+
+    private async Task LoadDrinks()
+    {
+        try
+        {
+            drinks = await _dbContext.Drinks.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching drinks: {ex.Message}");
+        }
+    }
+
+    private void ConfirmStockUpdate(Drink drink)
+    {
+        selectedDrinkForUpdate = drink;
+        showConfirmation = true;
+    }
+
+    private void ConfirmStockChange()
+    {
+        if (manualStockChanges.ContainsKey(selectedDrinkForUpdate))
+        {
+            stock[selectedDrinkForUpdate] = manualStockChanges[selectedDrinkForUpdate];
+            CheckLowStock();
+        }
+        showConfirmation = false;
+    }
+
+    private void CancelStockUpdate()
+    {
+        showConfirmation = false;
+    }
+
+    private void IncreaseStock(Drink drink)
+    {
+        stock[drink]++;
+        CheckLowStock();
+    }
+
+    private void DecreaseStock(Drink drink)
+    {
+        if (stock[drink] > 0)
+        {
+            stock[drink]--;
+            CheckLowStock();
+        }
+    }
+
+    private void RestockItem(Drink drink)
+    {
+        if (brouwerOrder.ContainsKey(drink))
+        {
+            stock[drink] += brouwerOrder[drink];
+            brouwerOrder[drink] = 0; 
+            CheckLowStock();
+        }
+    }
+
+    private void CheckLowStock()
+    {
+        lowStockItems = stock
+            .Where(item => item.Value <= 5)
+            .Select(item => item.Key)
+            .ToList();
+    }
+}

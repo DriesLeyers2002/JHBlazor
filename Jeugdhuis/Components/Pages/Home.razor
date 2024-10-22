@@ -1,6 +1,141 @@
 ﻿@page "/"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject AppDbContext _dbContext
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Menu</PageTitle>
 
-<h1>Hello, simon!</h1>
+<h1>Menu</h1>
 
+<div>
+    <button @onclick="SelectAll">Alle</button>
+    <button @onclick="SelectFrisdrank">Frisdrank</button>
+    <button @onclick="SelectBier">Bier</button>
+    <button @onclick="SelectWijn">Wijn & Cava</button>
+    <button @onclick="SelectSnacks">Snacks</button>
+    <button @onclick="SelectMietenbier">Mietenbier</button>
+</div>
+
+<input type="text" placeholder="Zoek drankjes..." @bind="searchTerm" />
+
+<p>Selecteer drankjes uit de onderstaande lijst:</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Drank</th>
+            <th>Prijs (€)</th>
+            <th>Aantal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (FilteredDrinks.Any())
+        {
+            @foreach (var drink in FilteredDrinks)
+            {
+                <tr>
+                    <td>@drink.Name</td>
+                    <td>€@drink.Price.ToString("0.00")</td>
+                    <td>
+                        <button class="btn btn-secondary" @onclick="() => DecreaseCount(drink)">-</button>
+                        <span>@(order.ContainsKey(drink) ? order[drink] : 0)</span>
+                        <button class="btn btn-primary" @onclick="() => IncreaseCount(drink)">+</button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3">Geen drankjes gevonden.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2>Uw Bestelling:</h2>
+
+@if (order.Count == 0 || order.Values.All(qty => qty == 0))
+{
+    <p>Er zijn nog geen drankjes toegevoegd aan de bestelling.</p>
+}
+else
+{
+    <ul>
+        @foreach (var item in order.Where(o => o.Value > 0))
+        {
+            <li>@item.Key.Name - Aantal: @item.Value - Totaal: €@((item.Key.Price * item.Value).ToString("0.00"))</li>
+        }
+    </ul>
+    <p><strong>Totaal: €@order.Sum(item => item.Key.Price * item.Value).ToString("0.00")</strong></p>
+}
+
+
+@code {
+    private List<Drink> drinks = new List<Drink>();
+
+    private Dictionary<Drink, int> order = new Dictionary<Drink, int>();
+
+    private string selectedCategory = null;
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDrinks();
+    }
+
+    private async Task LoadDrinks()
+    {
+        try
+        {
+            drinks = await _dbContext.Drinks.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching drinks: {ex.Message}");
+        }
+    }
+
+
+    private IEnumerable<Drink> FilteredDrinks => drinks
+        .Where(d => (selectedCategory == null || d.Category == selectedCategory) &&
+                    (string.IsNullOrEmpty(searchTerm) || d.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+    }
+
+    private void IncreaseCount(Drink drink)
+    {
+        if (order.ContainsKey(drink))
+        {
+            order[drink]++;
+        }
+        else
+        {
+            order[drink] = 1;
+        }
+
+        StateHasChanged(); 
+    }
+
+    private void DecreaseCount(Drink drink)
+    {
+        if (order.ContainsKey(drink) && order[drink] > 0)
+        {
+            order[drink]--;
+        }
+
+        StateHasChanged(); 
+    }
+
+    private void SelectAll() => SelectCategory(null);
+    private void SelectFrisdrank() => SelectCategory("frisdrank");
+    private void SelectBier() => SelectCategory("bier");
+    private void SelectWijn() => SelectCategory("wijn");
+    private void SelectSnacks() => SelectCategory("snacks");
+    private void SelectMietenbier() => SelectCategory("Mietenbier");
+}
