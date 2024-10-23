@@ -8,7 +8,6 @@ public class AppDbContext : IdentityDbContext<Boardmember>
 {
     public DbSet<Drink> Drinks { get; set; }
     public DbSet<User> Users { get; set; }
-    public DbSet<Stock> Stocks { get; set; }
     public DbSet<StockItem> StockItems { get; set; }
     public DbSet<Boardmember> Boardmembers { get; set; }
 
@@ -96,16 +95,6 @@ public class AppDbContext : IdentityDbContext<Boardmember>
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
-        });
-
-        // Stock Entity Configuration
-        modelBuilder.Entity<Stock>(entity =>
-        {
-            entity.HasKey(s => s.Id);
-            entity.HasMany(s => s.DrinkStock)
-                  .WithOne(si => si.Stock)
-                  .HasForeignKey(si => si.StockId)
-                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // StockItem Entity Configuration
