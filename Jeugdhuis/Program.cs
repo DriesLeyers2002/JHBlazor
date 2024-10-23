@@ -1,3 +1,4 @@
+using Jeugdhuis;
 using Jeugdhuis.Components;
 using Jeugdhuis.Models;
 using Microsoft.AspNetCore.Identity;
@@ -7,7 +8,7 @@ using Radzen;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(); 
+    .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<NotificationService>();
@@ -27,6 +28,13 @@ builder.Services.AddIdentity<Boardmember, IdentityRole>()
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddAuthorizationCore();
+
+builder.Services.AddScoped<CookieEvents>();
+
+builder.Services.ConfigureApplicationCookie(opt =>
+{
+    opt.EventsType = typeof(CookieEvents);
+});
 
 var app = builder.Build();
 

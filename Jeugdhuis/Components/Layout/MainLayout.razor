@@ -1,10 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
 <RadzenComponents @rendermode="InteractiveServer" />
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    @if (!IsLoginPage())
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
 
     <main>
         <div class="top-row px-4">
@@ -22,3 +26,10 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool IsLoginPage()
+    {
+        return NavigationManager.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
+    }
+}
