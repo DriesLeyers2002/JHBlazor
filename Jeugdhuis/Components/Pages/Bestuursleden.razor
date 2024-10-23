@@ -1,0 +1,50 @@
+﻿@page "/bestuursleden"
+@using Jeugdhuis.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@inject AppDbContext _dbContext
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Voorzitter,Admin")]
+
+<PageTitle>Bestuursleden</PageTitle>
+
+<h1>Bestuursleden</h1>
+
+<RadzenDataGrid @ref="grid" Data="@boardmembers" TItem="Boardmember" RowSelect="@OnRowSelect" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="Boardmember" Property="Id" Title="ID" Width="50px" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="Name" Title="Voornaam" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="Role" Title="Functie" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="PinCode" Title="Pincode" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private ICollection<Boardmember> boardmembers;
+    private RadzenDataGrid<Boardmember> grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        try
+        {
+            var allBoardmembers = await _dbContext.Boardmembers.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching board members: {ex.Message}");
+        }
+    }
+
+    private void OnRowSelect(Boardmember boardmember)
+    {
+        Console.WriteLine($"Selected user: {boardmember.Name} {boardmember.Role}");
+    }
+}

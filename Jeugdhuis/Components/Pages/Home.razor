@@ -1,4 +1,7 @@
 ﻿@page "/"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
 @using Jeugdhuis.Models
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer

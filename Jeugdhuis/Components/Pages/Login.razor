@@ -1,0 +1,103 @@
+﻿@page "/login"
+@attribute [AllowAnonymous]
+
+@using Jeugdhuis.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager NavigationManager
+@inject UserManager<Boardmember> UserManager
+@inject SignInManager<Boardmember> SignInManager
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<h3>Bestuursleden Login</h3>
+
+<RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
+    <EditForm Model="@boardmember" OnValidSubmit="OnLogin">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="boardmember.Name" Placeholder="Voornaam" Style="width: 100%;" />
+                <ValidationMessage For="@(() => boardmember.Name)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="boardmember.PasswordHash" Placeholder="Pincode" Style="width: 100%;" />
+                <ValidationMessage For="@(() => boardmember.PasswordHash)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="PIEMELSAUS" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenCard>
+
+@code {
+    public Boardmember boardmember = new Boardmember();
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //     var user = authState.User;
+
+    //     if (user.Identity.IsAuthenticated)
+    //     {
+    //         NavigationManager.NavigateTo("/");
+    //     }
+    // }
+
+    private async Task OnLogin()
+    {
+        try
+        {
+            // var temp12 = new Boardmember();
+            // temp12.UserName
+
+            var temp = boardmember.PasswordHash;
+            var temp2 = boardmember.Name;
+
+            var user = await UserManager.FindByNameAsync(boardmember.Name);
+            var result = await SignInManager.CheckPasswordSignInAsync(user, boardmember.PasswordHash, false);
+
+            if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+            {
+                Guid key = Guid.NewGuid();
+                BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Name = boardmember.Name, Password = boardmember.PasswordHash };
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Succesvol ingelogd",
+                        Detail = $"Welkom {boardmember.Name}!"
+                    });
+
+
+                NavigationManager.NavigateTo($"/login?key={key}", true);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Foute gegevens",
+                    Detail = $"Controleer je naam en pincode."
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error bij inloggen",
+                Detail = $"{ex.Message}"
+            });
+        }
+    }
+}

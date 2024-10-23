@@ -1,12 +1,16 @@
 ﻿using Jeugdhuis.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<Boardmember>
 {
     public DbSet<Drink> Drinks { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Stock> Stocks { get; set; }
     public DbSet<StockItem> StockItems { get; set; }
+    public DbSet<Boardmember> Boardmembers { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -16,18 +20,85 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        var hasher = new PasswordHasher<Boardmember>();
+
+        // Configuring IdentityRole to reduce Id length for MySQL compatibility
+        modelBuilder.Entity<IdentityRole>(entity =>
+        {
+            entity.Property(m => m.Id).HasMaxLength(64); // Verander naar 64
+            entity.Property(m => m.NormalizedName).HasMaxLength(256);
+            entity.HasIndex(m => m.NormalizedName).IsUnique().HasDatabaseName("RoleNameIndex");
+        });
+
+        modelBuilder.Entity<Boardmember>().ToTable("AspNetUsers");
+
+        modelBuilder.Entity<IdentityUserRole<string>>(entity =>
+        {
+            entity.Property(m => m.UserId).HasMaxLength(64);  // Verander naar 64
+            entity.Property(m => m.RoleId).HasMaxLength(64);  // Verander naar 64
+            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+        });
+
+        modelBuilder.Entity<IdentityUser>(entity =>
+        {
+            entity.Property(m => m.Id).HasMaxLength(128);
+            entity.Property(m => m.NormalizedUserName).HasMaxLength(256);
+            entity.Property(m => m.NormalizedEmail).HasMaxLength(256);
+
+            entity.HasIndex(m => m.NormalizedUserName).IsUnique().HasDatabaseName("UserNameIndex")
+                  .HasFilter("[NormalizedUserName] IS NOT NULL"); // Avoid index issues with NULLs
+        });
+
+        // Configuring IdentityUserLogin to reduce key lengths
+        modelBuilder.Entity<IdentityUserLogin<string>>(entity =>
+        {
+            entity.Property(m => m.LoginProvider).HasMaxLength(100);
+            entity.Property(m => m.ProviderKey).HasMaxLength(100);
+            entity.Property(m => m.UserId).HasMaxLength(100);
+        });
+
+        // Configuring IdentityUserToken to reduce key lengths
+        modelBuilder.Entity<IdentityUserToken<string>>(entity =>
+        {
+            entity.Property(m => m.UserId).HasMaxLength(64);  // Reduce UserId length
+            entity.Property(m => m.LoginProvider).HasMaxLength(64);
+            entity.Property(m => m.Name).HasMaxLength(64);
+        });
+
+        // Configuring IdentityUserRole to reduce key lengths and setting composite primary key
+        modelBuilder.Entity<IdentityUserRole<string>>()
+            .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+        modelBuilder.Entity<IdentityUserRole<string>>(entity =>
+        {
+            entity.Property(m => m.UserId).HasMaxLength(128);
+            entity.Property(m => m.RoleId).HasMaxLength(128);
+        });
+
+        // Configuring Boardmember entity (inheriting from IdentityUser)
+        modelBuilder.Entity<Boardmember>(entity =>
+        {
+            entity.Property(m => m.Id).HasMaxLength(64); // Verander naar 64
+            entity.Property(m => m.NormalizedUserName).HasMaxLength(256);
+            entity.Property(m => m.NormalizedEmail).HasMaxLength(256);
+            entity.HasIndex(m => m.NormalizedUserName).IsUnique().HasDatabaseName("UserNameIndex");
+        });
+
+        // Drink Entity Configuration
         modelBuilder.Entity<Drink>(entity =>
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
         });
 
+        // User Entity Configuration
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
         });
 
+        // Stock Entity Configuration
         modelBuilder.Entity<Stock>(entity =>
         {
             entity.HasKey(s => s.Id);
@@ -37,6 +108,7 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // StockItem Entity Configuration
         modelBuilder.Entity<StockItem>(entity =>
         {
             entity.HasKey(si => si.Id);
@@ -80,9 +152,49 @@ public class AppDbContext : DbContext
        );
 
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> {2023, 2024} },
+            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 } },
             new User { Id = 2, FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Address = "456 Elm St", Years = new List<int> { 2024 } },
-            new User { Id = 3, FirstName = "Alice", LastName = "Johnson", Email = "alice.johnson@example.com", Address = "789 Maple St", Years = new List<int> { 2022 } }
+            new User { Id = 3, FirstName = "Alice", LastName = "Johnson", Email = "alice.There is no entity type mapped to the table 'Boardmembers' which is used in a data operation. Either add the corresponding entity type to the model, or specify the column types in the data operation.ohnson@example.com", Address = "789 Maple St", Years = new List<int> { 2022 } }
         );
+
+        modelBuilder.Entity<Boardmember>().HasData(
+        new Boardmember
+        {
+            Id = "1", // IdentityUser requires a string Id
+            UserName = "Dries",
+            Name = "Dries",
+            NormalizedUserName = "DRIES",
+            Email = "dries@example.com",
+            NormalizedEmail = "DRIES@EXAMPLE.COM",
+            EmailConfirmed = true,
+            PasswordHash = hasher.HashPassword(null, "1234"), // Or use a specific password
+            Role = "Admin"
+        },
+        new Boardmember
+        {
+            Id = "2",
+            Name = "Vincent",
+            UserName = "Vincent",
+            NormalizedUserName = "VINCENT",
+            Email = "vincent@example.com",
+            NormalizedEmail = "VINCENT@EXAMPLE.COM",
+            EmailConfirmed = true,
+            PasswordHash = hasher.HashPassword(null, "1234"),
+            Role = "Voorzitter"
+        },
+        new Boardmember
+        {
+
+            Id = "3",
+            UserName = "Simon",
+            Name = "Simon",
+            NormalizedUserName = "SIMON",
+            Email = "simon@example.com",
+            NormalizedEmail = "SIMON@EXAMPLE.COM",
+            EmailConfirmed = true,
+            PasswordHash = hasher.HashPassword(null, "1234"),
+            Role = "Drankmeester"
+        }
+    );
     }
 }

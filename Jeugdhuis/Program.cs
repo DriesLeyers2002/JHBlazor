@@ -1,11 +1,11 @@
 using Jeugdhuis.Components;
 using Jeugdhuis.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
@@ -17,7 +17,16 @@ builder.Services.AddScoped<DialogService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-    new MySqlServerVersion(new Version(8, 3, 0))));
+    new MySqlServerVersion(new Version(8, 3, 0)))
+            .EnableSensitiveDataLogging());
+
+builder.Services.AddIdentity<Boardmember, IdentityRole>() 
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddAuthorizationCore();
 
 var app = builder.Build();
 
@@ -29,6 +38,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<BlazorCookieLoginMiddleware>();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
