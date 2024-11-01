@@ -127,7 +127,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
            new Drink { Id = 17, Name = "Gouden Carolus tripel", Price = 3.00, Category = "bier" },
            new Drink { Id = 18, Name = "Groene", Price = 1.50, Category = "frisdrank" },
            new Drink { Id = 19, Name = "Ice Tea", Price = 1.50, Category = "frisdrank" },
-           new Drink { Id = 20, Name = "Jupiler 0.0", Price = 1.50, Category = "Mietenbier" },
+           new Drink { Id = 20, Name = "Jupiler 0.0", Price = 1.50, Category = "bier" },
            new Drink { Id = 21, Name = "Kriek", Price = 2.00, Category = "bier" },
            new Drink { Id = 22, Name = "Maes fles", Price = 1.50, Category = "bier" },
            new Drink { Id = 23, Name = "Maes tap", Price = 1.50, Category = "bier" },

@@ -27,18 +27,28 @@
 
                                 @foreach (var stock in categoryDrinkPair.Value)
                                 {
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
-                                        <RadzenText TextStyle="TextStyle.Body1">@stock.Drink.Name</RadzenText>
+                                    <RadzenRow AlignItems="AlignItems.Center" class="rz-p-0">
 
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
+                                        <RadzenColumn Size="4 ">
+                                            <RadzenText TextStyle="TextStyle.Body1">@stock.Drink.Name</RadzenText>
+                                        </RadzenColumn>
 
+                                        <RadzenColumn Size="1">
                                             <RadzenButton Click="() => IncreaseCount(stock.Drink)" Icon="Add" ButtonStyle="ButtonStyle.Base" />
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="1">
+                                            <RadzenNumeric ShowUpDown="false"
+                                                           TValue="int?"
+                                                           Value="@GetOrderValue(stock.Drink)"
+                                                           ValueChanged="@(value => UpdateOrderValue(stock.Drink, value))"/>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="1">
                                             <RadzenButton Click="() => DecreaseCount(stock.Drink)" Icon="Remove" ButtonStyle="ButtonStyle.Base" />
-
-                                            <RadzenText TextStyle="TextStyle.Body1">@order.FirstOrDefault(x => x.Key == stock.Drink).Value</RadzenText>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="2">
                                             <RadzenText TextStyle="TextStyle.Body1">€@stock.Drink.Price.ToString("0.00")</RadzenText>
-                                        </RadzenStack>
-                                    </RadzenStack>
+                                        </RadzenColumn>
+                                    </RadzenRow>
                                 }
                             </RadzenStack>
                         </RadzenCard>
@@ -50,8 +60,39 @@
     </div>
     <div style="width: 30%" class="block">
         <RadzenCard Style="width: 500px; background-color: #fafafa">
-            <RadzenText TextStyle="TextStyle.H3">Bill <b>€@bill.ToString("0.00")</b></RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
+                <RadzenText TextStyle="TextStyle.H3">Bill</RadzenText>
+                <RadzenText TextStyle="TextStyle.H3"><b>€@bill.ToString("0.00")</b></RadzenText>
+            </RadzenStack>
 
+            @if (orders.Any())
+            {
+                @foreach (var order in orders)
+                {
+                    <RadzenRow AlignItems="AlignItems.Center" class="rz-p-0">
+
+                        <RadzenColumn>
+                            <RadzenText TextStyle="TextStyle.Body1">@order.Key.Name</RadzenText>
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="1">
+                            <RadzenButton Click="() => DecreaseCount(order.Key)" Icon="Remove" ButtonStyle="ButtonStyle.Base" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                            <RadzenNumeric ShowUpDown="false"
+                                           TValue="int?"
+                                           Value="@order.Value"
+                                           ValueChanged="@(value => UpdateOrderValue(order.Key, value))" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                            <RadzenButton Click="() => IncreaseCount(order.Key)" Icon="Add" ButtonStyle="ButtonStyle.Base" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="2">
+                            <RadzenText TextStyle="TextStyle.Body1">€@order.Key.Price.ToString("0.00")</RadzenText>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
+            }
         </RadzenCard>
     </div>
 </div>
@@ -79,6 +120,13 @@
 </div> *@
 
 <style>
+    .rz-numeric-input {
+        padding: 0px !important;
+        width: 34px !important;
+        height: 34px !important;
+        text-align: center !important;
+    }
+
     .block {
         margin: 10px;
     }
@@ -175,7 +223,7 @@ else
 @code {
     private new Dictionary<String, List<StockItem>> drinkMenu = new Dictionary<String, List<StockItem>>();
 
-    private Dictionary<Drink, int> order = new Dictionary<Drink, int>();
+    private Dictionary<Drink, int> orders = new Dictionary<Drink, int>();
     private double bill = 0;
 
     // private string selectedCategory = null;
@@ -196,6 +244,7 @@ else
 
             drinkMenu = stockItems
                 .GroupBy(stockItem => stockItem.Drink.Category)
+                .OrderBy(group => group.Key)
                 .ToDictionary(group => group.Key, group => group.ToList());
         }
         catch (Exception ex)
@@ -204,6 +253,24 @@ else
         }
     }
 
+    private int? GetOrderValue(Drink drink)
+    {
+        return orders.FirstOrDefault(x => x.Key == drink).Value; // Returns null if not found
+    }
+
+    private void UpdateOrderValue(Drink drink, int? value)
+    {
+        if (value.HasValue)
+        {
+            orders[drink] = value.Value;
+        }
+        else
+        {
+            orders.Remove(drink); // Handle removing the drink from orders if null
+        }
+
+        CalculateBill();
+    }
 
     // private IEnumerable<Drink> FilteredDrinks => drinks
     //     .Where(d => (selectedCategory == null || d.Category == selectedCategory) &&
@@ -217,19 +284,19 @@ else
 
     private void CalculateBill()
     {
-        bill = order.Sum(item => item.Key.Price * item.Value);
+        bill = orders.Sum(item => item.Key.Price * item.Value);
     }
 
 
     private void IncreaseCount(Drink drink)
     {
-        if (order.ContainsKey(drink))
+        if (orders.ContainsKey(drink))
         {
-            order[drink]++;
+            orders[drink]++;
         }
         else
         {
-            order[drink] = 1;
+            orders[drink] = 1;
         }
 
         CalculateBill();
@@ -239,13 +306,13 @@ else
 
     private void DecreaseCount(Drink drink)
     {
-        if (order.ContainsKey(drink) && order[drink] > 0)
+        if (orders.ContainsKey(drink) && orders[drink] > 0)
         {
-            order[drink]--;
+            orders[drink]--;
 
-            if (order[drink] == 0)
+            if (orders[drink] == 0)
             {
-                order.Remove(drink);
+                orders.Remove(drink);
             }
         }
 
