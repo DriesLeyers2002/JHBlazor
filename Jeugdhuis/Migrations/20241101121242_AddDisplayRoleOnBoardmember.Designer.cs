@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Jeugdhuis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241101121242_AddDisplayRoleOnBoardmember")]
+    partial class AddDisplayRoleOnBoardmember
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,9 +42,6 @@ namespace Jeugdhuis.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("LockoutEnabled")
@@ -93,16 +93,15 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7e70073f-29a0-48bd-aab6-623f95c40e97",
+                            ConcurrencyStamp = "fb227e36-1b50-4c3a-9cfe-f7b42ec27224",
                             Email = "dries@example.com",
                             EmailConfirmed = true,
-                            IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "DRIES@EXAMPLE.COM",
                             NormalizedUserName = "DRIES",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPcXKC8VqQvaib4C1qLzbidFJ76LRynn1iveaDJ99MZuZ65ECUccokeBMtlVR6n2yg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDU1xR1HSLfg+k71IibP0meVfqmMLmN5Alf7hxAHUp3zwAtzvY3foO3wMXvmpo96Ig==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "b1a70587-f522-4332-b19a-2f6cca2f4a34",
+                            SecurityStamp = "652250ff-be08-4810-881f-652d092457ca",
                             TwoFactorEnabled = false,
                             UserName = "Dries"
                         },
@@ -110,16 +109,15 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "2",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "4ae39bb9-a02d-4330-bce8-2467182579f0",
+                            ConcurrencyStamp = "c220e2b4-bc94-4bbd-b0a9-0a184b821b05",
                             Email = "vincent@example.com",
                             EmailConfirmed = true,
-                            IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "VINCENT@EXAMPLE.COM",
                             NormalizedUserName = "VINCENT",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIXpYEZSKbItUPrqUlxdFdDtYq1491JFadtqbvBSZj2/K0OjiZy/FX01BEyr2LDdcQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOuy61tZmh9VJFTFV8HjQP/3P189oyX1rFIwIZipAXDUL5MnNhgfHak/vQXLaEMZ8g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "44d3fefb-55d3-46c7-a3d2-eb3eb09dee7a",
+                            SecurityStamp = "ee88d35e-38a8-4ab2-9fad-cab4d2d08a3f",
                             TwoFactorEnabled = false,
                             UserName = "Vincent"
                         },
@@ -127,16 +125,15 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "3",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "519d895b-57d4-4e54-9464-0940bcdfba16",
+                            ConcurrencyStamp = "2a32f7e8-3a58-4867-ab02-b922b217e4f3",
                             Email = "simon@example.com",
                             EmailConfirmed = true,
-                            IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "SIMON@EXAMPLE.COM",
                             NormalizedUserName = "SIMON",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEWTRE3QKDEex8Er4t/8J+ef42aWFF49QYxlgc1fEriOTUYwwWRXgBAkfddsHHYl7Q==",
+                            PasswordHash = "AQAAAAIAAYagAAAAENy+HxTUODEncnE1xjAyO2DdaEh7BLhQXRsXkYUi38HM7gvAOE+6XjYGfiDbYAOavw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "0f39dfca-db49-4d90-b98e-69a8d8172765",
+                            SecurityStamp = "7105c039-97c4-42af-a792-eede1c5b3178",
                             TwoFactorEnabled = false,
                             UserName = "Simon"
                         });
@@ -553,7 +550,7 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = 3,
                             Address = "789 Maple St",
-                            Email = "alica.johnson@example.com",
+                            Email = "alice.There is no entity type mapped to the table 'Boardmembers' which is used in a data operation. Either add the corresponding entity type to the model, or specify the column types in the data operation.ohnson@example.com",
                             FirstName = "Alice",
                             LastName = "Johnson",
                             Years = "[2022]"
