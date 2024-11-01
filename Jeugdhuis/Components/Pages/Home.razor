@@ -11,6 +11,103 @@
 
 <h1>Menu</h1>
 
+<div style="display: flex">
+    <div style="width: 70%" class="block">
+        <RadzenStack Gap="10" Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceEvenly">
+
+            @if (drinkMenu.Any())
+            {
+                @foreach (var categoryDrinkPair in drinkMenu)
+                {
+                    @if (categoryDrinkPair.Value.Any())
+                    {
+                        <RadzenCard Style="width: 500px; background-color: #fafafa">
+                            <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-0">
+                                <RadzenText TextStyle="TextStyle.H5"><b>@categoryDrinkPair.Key</b></RadzenText>
+
+                                @foreach (var stock in categoryDrinkPair.Value)
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
+                                        <RadzenText TextStyle="TextStyle.Body1">@stock.Drink.Name</RadzenText>
+
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
+
+                                            <RadzenButton Click="() => IncreaseCount(stock.Drink)" Icon="Add" ButtonStyle="ButtonStyle.Base" />
+                                            <RadzenButton Click="() => DecreaseCount(stock.Drink)" Icon="Remove" ButtonStyle="ButtonStyle.Base" />
+
+                                            <RadzenText TextStyle="TextStyle.Body1">@order.FirstOrDefault(x => x.Key == stock.Drink).Value</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body1">€@stock.Drink.Price.ToString("0.00")</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                }
+            }
+        </RadzenStack>
+
+    </div>
+    <div style="width: 30%" class="block">
+        <RadzenCard Style="width: 500px; background-color: #fafafa">
+            <RadzenText TextStyle="TextStyle.H3">Bill <b>€@bill.ToString("0.00")</b></RadzenText>
+
+        </RadzenCard>
+    </div>
+</div>
+
+@* <div class="flex-container">
+    <div class="flex-row">
+        @if (categories.Any())
+        {
+            @foreach (var category in categories)
+            {
+                <RadzenButton class="flex-item filter-button" Text="@category" />
+
+            }
+        }
+    </div>
+    <div class="flex-row">
+        @if (FilteredDrinks.Any())
+        {
+            @foreach (var drink in FilteredDrinks)
+            {
+                <RadzenButton class="flex-item" Text="@drink.Name" />
+            }
+        }
+    </div>
+</div> *@
+
+<style>
+    .block {
+        margin: 10px;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: column; /* Stack rows vertically */
+        gap: 15px; /* Space between rows */
+    }
+
+    .flex-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        align-content: center;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .flex-item {
+        width: 400px !important;
+        height: 40px !important;
+    }
+
+    .filter-button {
+    }
+</style>
+
+@*
 <div>
     <button @onclick="SelectAll">Alle</button>
     <button @onclick="SelectFrisdrank">Frisdrank</button>
@@ -73,15 +170,16 @@ else
     </ul>
     <p><strong>Totaal: €@order.Sum(item => item.Key.Price * item.Value).ToString("0.00")</strong></p>
 }
-
+ *@
 
 @code {
-    private List<Drink> drinks = new List<Drink>();
+    private new Dictionary<String, List<StockItem>> drinkMenu = new Dictionary<String, List<StockItem>>();
 
     private Dictionary<Drink, int> order = new Dictionary<Drink, int>();
+    private double bill = 0;
 
-    private string selectedCategory = null;
-    private string searchTerm = "";
+    // private string selectedCategory = null;
+    // private string searchTerm = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,7 +190,13 @@ else
     {
         try
         {
-            drinks = await _dbContext.Drinks.ToListAsync();
+            var stockItems = await _dbContext.StockItems
+                .Include(stockItem => stockItem.Drink)
+                .ToListAsync();
+
+            drinkMenu = stockItems
+                .GroupBy(stockItem => stockItem.Drink.Category)
+                .ToDictionary(group => group.Key, group => group.ToList());
         }
         catch (Exception ex)
         {
@@ -101,15 +205,21 @@ else
     }
 
 
-    private IEnumerable<Drink> FilteredDrinks => drinks
-        .Where(d => (selectedCategory == null || d.Category == selectedCategory) &&
-                    (string.IsNullOrEmpty(searchTerm) || d.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
-        .ToList();
+    // private IEnumerable<Drink> FilteredDrinks => drinks
+    //     .Where(d => (selectedCategory == null || d.Category == selectedCategory) &&
+    //                 (string.IsNullOrEmpty(searchTerm) || d.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
+    //     .ToList();
 
-    private void SelectCategory(string category)
+    // private void SelectCategory(string category)
+    // {
+    //     selectedCategory = category;
+    // }
+
+    private void CalculateBill()
     {
-        selectedCategory = category;
+        bill = order.Sum(item => item.Key.Price * item.Value);
     }
+
 
     private void IncreaseCount(Drink drink)
     {
@@ -122,7 +232,9 @@ else
             order[drink] = 1;
         }
 
-        StateHasChanged(); 
+        CalculateBill();
+
+        StateHasChanged();
     }
 
     private void DecreaseCount(Drink drink)
@@ -130,15 +242,22 @@ else
         if (order.ContainsKey(drink) && order[drink] > 0)
         {
             order[drink]--;
+
+            if (order[drink] == 0)
+            {
+                order.Remove(drink);
+            }
         }
 
-        StateHasChanged(); 
+        CalculateBill();
+
+        StateHasChanged();
     }
 
-    private void SelectAll() => SelectCategory(null);
-    private void SelectFrisdrank() => SelectCategory("frisdrank");
-    private void SelectBier() => SelectCategory("bier");
-    private void SelectWijn() => SelectCategory("wijn");
-    private void SelectSnacks() => SelectCategory("snacks");
-    private void SelectMietenbier() => SelectCategory("Mietenbier");
+    // private void SelectAll() => SelectCategory(null);
+    // private void SelectFrisdrank() => SelectCategory("frisdrank");
+    // private void SelectBier() => SelectCategory("bier");
+    // private void SelectWijn() => SelectCategory("wijn");
+    // private void SelectSnacks() => SelectCategory("snacks");
+    // private void SelectMietenbier() => SelectCategory("Mietenbier");
 }

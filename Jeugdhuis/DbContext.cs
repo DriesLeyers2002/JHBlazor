@@ -140,6 +140,40 @@ public class AppDbContext : IdentityDbContext<Boardmember>
            new Drink { Id = 30, Name = "Zakje chips ouleh", Price = 1.50, Category = "snacks" }
        );
 
+        modelBuilder.Entity<StockItem>().HasData(
+            new StockItem { Id = 1, DrinkId = 1, Quantity = 20 },
+            new StockItem { Id = 2, DrinkId = 2, Quantity = 15 },
+            new StockItem { Id = 3, DrinkId = 3, Quantity = 25 },
+            new StockItem { Id = 4, DrinkId = 4, Quantity = 10 },
+            new StockItem { Id = 5, DrinkId = 5, Quantity = 12 },
+            new StockItem { Id = 6, DrinkId = 6, Quantity = 18 },
+            new StockItem { Id = 7, DrinkId = 7, Quantity = 30 },
+            new StockItem { Id = 8, DrinkId = 8, Quantity = 28 },
+            new StockItem { Id = 9, DrinkId = 9, Quantity = 14 },
+            new StockItem { Id = 10, DrinkId = 10, Quantity = 16 },
+            new StockItem { Id = 11, DrinkId = 11, Quantity = 22 },
+            new StockItem { Id = 12, DrinkId = 12, Quantity = 5 },
+            new StockItem { Id = 13, DrinkId = 13, Quantity = 8 },
+            new StockItem { Id = 14, DrinkId = 14, Quantity = 10 },
+            new StockItem { Id = 15, DrinkId = 15, Quantity = 12 },
+            new StockItem { Id = 16, DrinkId = 16, Quantity = 7 },
+            new StockItem { Id = 17, DrinkId = 17, Quantity = 7 },
+            new StockItem { Id = 18, DrinkId = 18, Quantity = 26 },
+            new StockItem { Id = 19, DrinkId = 19, Quantity = 20 },
+            new StockItem { Id = 20, DrinkId = 20, Quantity = 18 },
+            new StockItem { Id = 21, DrinkId = 21, Quantity = 9 },
+            new StockItem { Id = 22, DrinkId = 22, Quantity = 14 },
+            new StockItem { Id = 23, DrinkId = 23, Quantity = 13 },
+            new StockItem { Id = 24, DrinkId = 24, Quantity = 6 },
+            new StockItem { Id = 25, DrinkId = 25, Quantity = 25 },
+            new StockItem { Id = 26, DrinkId = 26, Quantity = 27 },
+            new StockItem { Id = 27, DrinkId = 27, Quantity = 11 },
+            new StockItem { Id = 28, DrinkId = 28, Quantity = 11 },
+            new StockItem { Id = 29, DrinkId = 29, Quantity = 8 },
+            new StockItem { Id = 30, DrinkId = 30, Quantity = 21 }
+        );
+
+
         modelBuilder.Entity<User>().HasData(
             new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 } },
             new User { Id = 2, FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Address = "456 Elm St", Years = new List<int> { 2024 } },
