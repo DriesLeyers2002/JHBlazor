@@ -10,6 +10,7 @@
 <PageTitle>Leden</PageTitle>
 
 <h1>Leden</h1>
+<RadzenButton Text="Gebruiker toevoegen" Click=@OpenAddUserDialog Icon="add" />
 
 <RadzenStack Orientation="Orientation.Horizontal" Style="margin-top:10px; margin-bottom:10px;">
     <RadzenLabel Text="Selecteer een jaartal" Component="DropDownChangeEvent" />
@@ -79,5 +80,27 @@
     private void OnRowSelect(User user)
     {
         Console.WriteLine($"Selected user: {user.FirstName} {user.LastName}");
+    }
+
+    private async Task OpenAddUserDialog()
+    {
+        User result = await DialogService.OpenAsync<AddUserDialog>("Gebruiker toevoegen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            result.Years = new List<int>();
+            result.Years.Add(DateTime.Now.Year);
+
+            _dbContext.Users.Add(result);
+            await _dbContext.SaveChangesAsync();
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Gebruiker met succes toegevoegd!",
+                    Detail = $"U heeft met succes {result.FirstName} {result.LastName} toegevoegd."
+                });
+        }
     }
 }

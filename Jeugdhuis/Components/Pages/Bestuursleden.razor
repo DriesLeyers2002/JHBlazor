@@ -1,11 +1,13 @@
 ﻿@page "/bestuursleden"
 @using Jeugdhuis.Models
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @inject AppDbContext _dbContext
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject UserManager<Boardmember> UserManager
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Voorzitter,Admin")]
 
@@ -13,12 +15,25 @@
 
 <h1>Bestuursleden</h1>
 
-<RadzenDataGrid @ref="grid" Data="@boardmembers" TItem="Boardmember" RowSelect="@OnRowSelect" ColumnWidth="200px">
+<RadzenDataGrid @ref="grid" Data="@boardmembers" TItem="Boardmember" ColumnWidth="200px">
     <Columns>
         <RadzenDataGridColumn TItem="Boardmember" Property="Id" Title="ID" Width="50px" />
-        <RadzenDataGridColumn TItem="Boardmember" Property="Name" Title="Voornaam" />
-        <RadzenDataGridColumn TItem="Boardmember" Property="Role" Title="Functie" />
-        <RadzenDataGridColumn TItem="Boardmember" Property="PinCode" Title="Pincode" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="UserName" Title="Voornaam" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="DisplayRole" Title="Functie" />
+        <RadzenDataGridColumn TItem="Boardmember" Title="Pincode">
+            <Template Context="boardmember">
+                ****
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="Boardmember" Title="Acties" Width="100px">
+            <Template Context="boardmember">
+                <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
+                              Click="@(args => ConfirmDelete(boardmember))" />
+                <RadzenButton Icon="key" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
+                              Click="@(args => OpenChangePinCodeDialog(boardmember))" />
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
@@ -35,7 +50,13 @@
     {
         try
         {
-            var allBoardmembers = await _dbContext.Boardmembers.ToListAsync();
+            boardmembers = await _dbContext.Boardmembers.ToListAsync();
+
+            foreach (var member in boardmembers)
+            {
+                var roles = await UserManager.GetRolesAsync(member);
+                member.DisplayRole = string.Join(", ", roles);
+            }
         }
         catch (Exception ex)
         {
@@ -43,8 +64,59 @@
         }
     }
 
-    private void OnRowSelect(Boardmember boardmember)
+    private async Task ConfirmDelete(Boardmember boardmember)
     {
-        Console.WriteLine($"Selected user: {boardmember.Name} {boardmember.Role}");
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u {boardmember.UserName} wilt verwijderen?", "Bevestig verwijdering",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await DeleteBoardmember(boardmember);
+        }
+    }
+
+    private async Task DeleteBoardmember(Boardmember boardmember)
+    {
+        try
+        {
+            boardmember.IsActive = false;
+            _dbContext.Update(boardmember); 
+            await _dbContext.SaveChangesAsync(); 
+
+            boardmembers.Remove(boardmember); 
+            await grid.Reload(); 
+
+            NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"{boardmember.UserName} is gedeactiveerd."); 
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het deactiveren van {boardmember.UserName}.");
+        }
+    }
+
+    private void OpenChangePinCodeDialog(Boardmember boardmember)
+    {
+        DialogService.Open<ChangePinCodeDialog>("Wijzig Pincode", new Dictionary<string, object>()
+        {
+            { "OnConfirm", EventCallback.Factory.Create<string>(this, async newPinCode => await ChangePinCode(boardmember, newPinCode)) }
+        });
+    }
+
+    private async Task ChangePinCode(Boardmember boardmember, string newPinCode)
+    {
+        try
+        {
+            var hasher = new PasswordHasher<Boardmember>();
+            boardmember.PasswordHash = hasher.HashPassword(boardmember, newPinCode); 
+
+            _dbContext.Update(boardmember); 
+            await _dbContext.SaveChangesAsync(); 
+
+            NotificationService.Notify(NotificationSeverity.Success, "Pincode gewijzigd", $"De pincode van {boardmember.UserName} is succesvol gewijzigd."); 
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het wijzigen van de pincode voor {boardmember.UserName}.");
+        }
     }
 }

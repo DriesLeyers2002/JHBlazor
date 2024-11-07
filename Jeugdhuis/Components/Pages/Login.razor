@@ -20,8 +20,8 @@
 
         <RadzenRow Gap="2rem" RowGap="2rem">
             <RadzenColumn Size="12" SizeMD="6">
-                <RadzenTextBox @bind-Value="boardmember.Name" Placeholder="Voornaam" Style="width: 100%;" />
-                <ValidationMessage For="@(() => boardmember.Name)" />
+                <RadzenTextBox @bind-Value="boardmember.UserName" Placeholder="Voornaam" Style="width: 100%;" />
+                <ValidationMessage For="@(() => boardmember.UserName)" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6">
@@ -41,63 +41,63 @@
 @code {
     public Boardmember boardmember = new Boardmember();
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-    //     var user = authState.User;
-
-    //     if (user.Identity.IsAuthenticated)
-    //     {
-    //         NavigationManager.NavigateTo("/");
-    //     }
-    // }
-
     private async Task OnLogin()
     {
         try
         {
-            // var temp12 = new Boardmember();
-            // temp12.UserName
-
             var temp = boardmember.PasswordHash;
-            var temp2 = boardmember.Name;
+            var temp2 = boardmember.UserName;
 
-            var user = await UserManager.FindByNameAsync(boardmember.Name);
-            var result = await SignInManager.CheckPasswordSignInAsync(user, boardmember.PasswordHash, false);
+            var user = await UserManager.FindByNameAsync(boardmember.UserName);
 
-            if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+            if (user.IsActive)
             {
-                Guid key = Guid.NewGuid();
-                BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Name = boardmember.Name, Password = boardmember.PasswordHash };
+                var result = await SignInManager.CheckPasswordSignInAsync(user, boardmember.PasswordHash, false);
 
-                NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Succesvol ingelogd",
-                        Detail = $"Welkom {boardmember.Name}!"
-                    });
+                if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+                {
+                    Guid key = Guid.NewGuid();
+                    BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Name = boardmember.UserName, Password = boardmember.PasswordHash };
+
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Succesvol ingelogd",
+                            Detail = $"Welkom {boardmember.UserName}!"
+                        });
 
 
-                NavigationManager.NavigateTo($"/login?key={key}", true);
+                    NavigationManager.NavigateTo($"/login?key={key}", true);
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Foute gegevens",
+                            Detail = $"Controleer je naam en pincode."
+                        });
+                }
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Foute gegevens",
-                    Detail = $"Controleer je naam en pincode."
-                });
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Gebruiker is niet meer actief.",
+                        Detail = $"Contacteer de voorzitter."
+                    });
             }
+
         }
         catch (Exception ex)
         {
             NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Error bij inloggen",
-                Detail = $"{ex.Message}"
-            });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error bij inloggen",
+                    Detail = $"{ex.Message}"
+                });
         }
     }
 }
