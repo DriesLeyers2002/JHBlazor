@@ -185,6 +185,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
         modelBuilder.Entity<IdentityUserRole<string>>().HasData(
            new IdentityUserRole<string> { UserId = dries.Id, RoleId = adminRole.Id },
            new IdentityUserRole<string> { UserId = vincent.Id, RoleId = voorzitterRole.Id },
+           new IdentityUserRole<string> { UserId = vincent.Id, RoleId = adminRole.Id },
            new IdentityUserRole<string> { UserId = simon.Id, RoleId = drankmeesterRole.Id },
            new IdentityUserRole<string> { UserId = simon.Id, RoleId = adminRole.Id } 
    );

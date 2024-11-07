@@ -49,41 +49,55 @@
             var temp2 = boardmember.UserName;
 
             var user = await UserManager.FindByNameAsync(boardmember.UserName);
-            var result = await SignInManager.CheckPasswordSignInAsync(user, boardmember.PasswordHash, false);
 
-            if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+            if (user.IsActive)
             {
-                Guid key = Guid.NewGuid();
-                BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Name = boardmember.UserName, Password = boardmember.PasswordHash };
+                var result = await SignInManager.CheckPasswordSignInAsync(user, boardmember.PasswordHash, false);
 
-                NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Succesvol ingelogd",
-                        Detail = $"Welkom {boardmember.UserName}!"
-                    });
+                if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+                {
+                    Guid key = Guid.NewGuid();
+                    BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Name = boardmember.UserName, Password = boardmember.PasswordHash };
+
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Succesvol ingelogd",
+                            Detail = $"Welkom {boardmember.UserName}!"
+                        });
 
 
-                NavigationManager.NavigateTo($"/login?key={key}", true);
+                    NavigationManager.NavigateTo($"/login?key={key}", true);
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Foute gegevens",
+                            Detail = $"Controleer je naam en pincode."
+                        });
+                }
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Foute gegevens",
-                    Detail = $"Controleer je naam en pincode."
-                });
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Gebruiker is niet meer actief.",
+                        Detail = $"Contacteer de voorzitter."
+                    });
             }
+
         }
         catch (Exception ex)
         {
             NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Error bij inloggen",
-                Detail = $"{ex.Message}"
-            });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error bij inloggen",
+                    Detail = $"{ex.Message}"
+                });
         }
     }
 }
