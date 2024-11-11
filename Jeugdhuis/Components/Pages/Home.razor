@@ -14,16 +14,22 @@
 
 <div style="display: flex">
     <div style="width: 70%" class="block">
+        @* Style=@($"background-color: {categoryDrinkPair.Key.Color}; color: white;")
+        class="@(selectedCategories.Equals(categoryDrinkPair.Key.Id) ? "selected-button grid-button" : "grid-button")"
+
+        *@
+
         <RadzenRow class="rz-p-0" Style="margin-bottom: 20px" Gap="10px">
             @if (drinkMenu.Any())
             {
                 @foreach (var categoryDrinkPair in drinkMenu)
                 {
                     <RadzenColumn Size="2" Style="max-width: 150px !important">
-                        <RadzenButton Text="@categoryDrinkPair.Key"
+                        <RadzenButton Text="@categoryDrinkPair.Key.Name"
                                       ButtonStyle="ButtonStyle.Base"
-                                      class="@(selectedCategories.Equals(categoryDrinkPair.Key) ? "selected-button grid-button" : "grid-button")"
-                                      Click="() => Addfilter(categoryDrinkPair.Key)" />
+                                      class="grid-button"
+                                      Style=@(selectedCategories.Equals(categoryDrinkPair.Key.Id) ? $"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};" : "")
+                                      Click="() => Addfilter(categoryDrinkPair.Key.Id)" />
                     </RadzenColumn>
 
                 }
@@ -36,7 +42,7 @@
             {
                 @foreach (var categoryDrinkPair in drinkMenu)
                 {
-                    if (!selectedCategories.Any() || selectedCategories.Equals(categoryDrinkPair.Key))
+                    if (selectedCategories == -1 || selectedCategories.Equals(categoryDrinkPair.Key.Id))
                     {
                         @if (categoryDrinkPair.Value.Any())
                         {
@@ -45,7 +51,8 @@
                                 <RadzenColumn Size="2" Style="max-width: 150px !important">
                                     <RadzenButton ButtonStyle="ButtonStyle.Base"
                                                   Click="() => IncreaseCount(stock.Drink)"
-                                                  class="grid-button">
+                                                  class="grid-button"
+                                                  Style=@($"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};")>
                                         @((MarkupString)$"{stock.Drink.Name}<br />{stock.Drink.Price:0.00}")
                                     </RadzenButton>
                                 </RadzenColumn>
@@ -176,13 +183,13 @@
 </style>
 
 @code {
-    private Dictionary<String, List<StockItem>> drinkMenu = new Dictionary<String, List<StockItem>>();
+    private Dictionary<Category, List<StockItem>> drinkMenu = new Dictionary<Category, List<StockItem>>();
 
     private Dictionary<Drink, int> orders = new Dictionary<Drink, int>();
     private double bill = 0;
     private double amount = 0;
 
-    private String selectedCategories = "";
+    private int selectedCategories = -1;
 
     private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50, 100 };
     private double paidWith = 0.0;
@@ -198,12 +205,14 @@
         {
             var stockItems = await _dbContext.StockItems
                 .Include(stockItem => stockItem.Drink)
+                .ThenInclude(drink => drink.Category)
                 .ToListAsync();
 
             drinkMenu = stockItems
                 .GroupBy(stockItem => stockItem.Drink.Category)
                 .OrderBy(group => group.Key)
                 .ToDictionary(group => group.Key, group => group.ToList());
+            Console.WriteLine("test");
         }
         catch (Exception ex)
         {
@@ -270,7 +279,7 @@
         StateHasChanged();
     }
 
-    private void Addfilter(String catorgory)
+    private void Addfilter(int catorgory)
     {
         if (!selectedCategories.Equals(catorgory))
         {
@@ -278,7 +287,7 @@
         }
         else
         {
-            selectedCategories = "";
+            selectedCategories = -1;
         }
     }
 
@@ -312,5 +321,22 @@
     private void addCashAmount(double cashAmount)
     {
         paidWith += cashAmount;
+    }
+
+    private string GetTextColor(string backgroundColor)
+    {
+        if (string.IsNullOrEmpty(backgroundColor) || !backgroundColor.StartsWith("#"))
+        {
+            return "white";
+        }
+
+        var hex = backgroundColor.TrimStart('#');
+        int r = Convert.ToInt32(hex.Substring(0, 2), 16);
+        int g = Convert.ToInt32(hex.Substring(2, 2), 16);
+        int b = Convert.ToInt32(hex.Substring(4, 2), 16);
+
+        double luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+        return luminance > 128 ? "black" : "white";
     }
 }
