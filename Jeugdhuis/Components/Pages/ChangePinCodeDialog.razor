@@ -1,0 +1,57 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Radzen
+
+<DialogTemplate>
+    <h3>Wijzig Pincode</h3>
+    <div>
+        <label>Nieuwe Pincode:</label>
+        <input type="password" @bind="newPinCode" class="form-control" />
+    </div>
+    <div>
+        <label>Bevestig Pincode:</label>
+        <input type="password" @bind="confirmPinCode" class="form-control" />
+    </div>
+    <div class="mt-2">
+        <RadzenButton Text="Bevestig" ButtonStyle="ButtonStyle.Primary" Click="HandleConfirm" />
+        <RadzenButton Text="Annuleer" ButtonStyle="ButtonStyle.Secondary" Click="HandleCancel" />
+    </div>
+</DialogTemplate>
+
+@code {
+    [Inject]
+    private DialogService DialogService { get; set; }
+
+    [Inject]
+    private NotificationService NotificationService { get; set; } 
+
+    [Parameter]
+    public EventCallback<string> OnConfirm { get; set; }
+
+    private string newPinCode; 
+    private string confirmPinCode;
+    private bool isValid;
+
+    private void Validate()
+    {
+        isValid = !string.IsNullOrEmpty(newPinCode) && newPinCode == confirmPinCode;
+    }
+
+    private async Task HandleConfirm()
+    {
+        Validate();
+        if (isValid)
+        {
+            await OnConfirm.InvokeAsync(newPinCode); 
+            DialogService.Close();  
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Fout", "De pincodes komen niet overeen of zijn leeg.");
+        }
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+}
