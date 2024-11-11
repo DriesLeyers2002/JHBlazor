@@ -97,7 +97,21 @@
                 }
             </div>
 
-            <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay" Click="Pay" />
+            <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="Pay" />
+
+            <RadzenText TextStyle="TextStyle.Body1">Change €@((bill - paidWith).ToString("0.00"))</RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body1">Paid with </RadzenText>
+            <RadzenNumeric Style="width: 100%" @bind-Value=@paidWith />
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly" Gap="1rem" class="rz-p-0">
+                @foreach (var cashAmount in cashAmounts)
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Base" Text="@cashAmount.ToString()" Click="() => addCashAmount(cashAmount)" />
+                }
+            </RadzenStack>
+
+            <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="Pay" />
 
 
         </RadzenCard>
@@ -169,6 +183,9 @@
     private double amount = 0;
 
     private String selectedCategories = "";
+
+    private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50, 100 };
+    private double paidWith = 0.0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -287,8 +304,13 @@
 
         orders.Clear();
         CalculateBill();
+        paidWith = 0.0;
 
         NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
     }
 
+    private void addCashAmount(double cashAmount)
+    {
+        paidWith += cashAmount;
+    }
 }
