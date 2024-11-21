@@ -46,7 +46,7 @@
                     {
                         @if (categoryDrinkPair.Value.Any())
                         {
-                            @foreach (var stock in categoryDrinkPair.Value)
+                            @foreach (var stock in categoryDrinkPair.Value.Where(stock => stock.Quantity > 0))
                             {
                                 <RadzenColumn Size="2" Style="max-width: 150px !important">
                                     <RadzenButton ButtonStyle="ButtonStyle.Base"
@@ -203,7 +203,7 @@
     {
         try
         {
-            var stockItems = await _dbContext.StockItems
+            var stockItems = await _dbContext.StockItems.Where(stock => stock.Quantity > 0)
                 .Include(stockItem => stockItem.Drink)
                 .ThenInclude(drink => drink.Category)
                 .ToListAsync();
@@ -212,7 +212,6 @@
                 .GroupBy(stockItem => stockItem.Drink.Category)
                 .OrderBy(group => group.Key)
                 .ToDictionary(group => group.Key, group => group.ToList());
-            Console.WriteLine("test");
         }
         catch (Exception ex)
         {
@@ -248,6 +247,27 @@
 
     private void IncreaseCount(Drink drink)
     {
+        var stockItem = drinkMenu
+            .SelectMany(category => category.Value)
+            .FirstOrDefault(item => item.Drink.Id == drink.Id);
+
+        if (stockItem == null)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Stock empty" });
+
+            return;
+        }
+
+        var currentOrderCount = orders.ContainsKey(drink) ? orders[drink] : 0;
+
+        if (currentOrderCount >= stockItem.Quantity)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Stock empty" });
+
+            return;
+        }
+
+
         if (orders.ContainsKey(drink))
         {
             orders[drink]++;
@@ -258,7 +278,6 @@
         }
 
         CalculateBill();
-
         StateHasChanged();
     }
 
@@ -293,30 +312,44 @@
 
     private async Task Pay()
     {
-        var stockItems = await _dbContext.StockItems
-            .Include(stockItem => stockItem.Drink)
-            .ToListAsync();
-
         foreach (var order in orders)
         {
             var drink = order.Key;
             var quantityOrdered = order.Value;
 
-            var stockItem = stockItems.FirstOrDefault(si => si.Drink.Id == drink.Id);
+            // Find the stock item for the ordered drink
+            var stockItem = drinkMenu.Values
+                .SelectMany(category => category) // Flatten the grouped stock items
+                .FirstOrDefault(si => si.Drink.Id == drink.Id);
+
             if (stockItem != null && stockItem.Quantity >= quantityOrdered)
             {
                 stockItem.Quantity -= quantityOrdered;
+
+                // If the stock item runs out, remove it from the menu
+                if (stockItem.Quantity == 0)
+                {
+                    var category = drinkMenu.FirstOrDefault(c => c.Value.Contains(stockItem)).Key;
+                    drinkMenu[category].Remove(stockItem);
+
+                    if (!drinkMenu[category].Any())
+                    {
+                        drinkMenu.Remove(category); // Remove the empty category
+                    }
+                }
             }
         }
 
         await _dbContext.SaveChangesAsync();
 
         orders.Clear();
-        CalculateBill();
+        this.CalculateBill();
         paidWith = 0.0;
 
+        // Notify user of successful payment
         NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
     }
+
 
     private void addCashAmount(double cashAmount)
     {
