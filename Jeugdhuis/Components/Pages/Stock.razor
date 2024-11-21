@@ -23,7 +23,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        stocks = await DbContext.StockItems.Where(x => x.Drink.IsActive).ToListAsync();
+        stocks = await DbContext.StockItems.Include(stockItem => stockItem.Drink).Where(x => x.Drink.IsActive).ToListAsync();
     }
 
     private async Task ShowAddDrinkDialog()
