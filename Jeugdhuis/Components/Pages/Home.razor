@@ -28,10 +28,9 @@
                         <RadzenButton Text="@categoryDrinkPair.Key.Name"
                                       ButtonStyle="ButtonStyle.Base"
                                       class="grid-button"
-                                      Style=@(selectedCategories.Equals(categoryDrinkPair.Key.Id) ? $"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};" : "")
+                                      Style="@GetButtonStyle(categoryDrinkPair.Key.Id, categoryDrinkPair.Key.Color)"
                                       Click="() => Addfilter(categoryDrinkPair.Key.Id)" />
                     </RadzenColumn>
-
                 }
             }
         </RadzenRow>
@@ -64,7 +63,7 @@
         </RadzenRow>
     </div>
     <div style="width: 30%" class="block">
-        <RadzenCard Style="width: 500px; background-color: #fafafa">
+        <RadzenCard class="right-card">
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
                 <RadzenText TextStyle="TextStyle.H3">Bill</RadzenText>
                 <RadzenText TextStyle="TextStyle.H3"><b>€@bill.ToString("0.00")</b></RadzenText>
@@ -104,23 +103,36 @@
                 }
             </div>
 
-            <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="Pay" />
 
-            <RadzenText TextStyle="TextStyle.Body1">Change €@((bill - paidWith).ToString("0.00"))</RadzenText>
 
-            <RadzenText TextStyle="TextStyle.Body1">Paid with </RadzenText>
+
+        </RadzenCard>
+        <RadzenCard class="right-card" Style="margin-top: 30px">
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="Pay" class="pay-button" />
+            </RadzenStack>
+
+            <hr />
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
+                <RadzenText TextStyle="TextStyle.H3">Wisselgeld </RadzenText>
+                <RadzenText TextStyle="TextStyle.H3"><b>€@((bill - paidWith).ToString("0.00"))</b></RadzenText>
+            </RadzenStack>
+
+
+            <RadzenText TextStyle="TextStyle.H5">Paid with </RadzenText>
             <RadzenNumeric Style="width: 100%" @bind-Value=@paidWith />
 
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly" Gap="1rem" class="rz-p-0">
                 @foreach (var cashAmount in cashAmounts)
                 {
-                    <RadzenButton ButtonStyle="ButtonStyle.Base" Text="@cashAmount.ToString()" Click="() => addCashAmount(cashAmount)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Base" Text="@($"€{cashAmount}")" Click="() => addCashAmount(cashAmount)" />
                 }
             </RadzenStack>
 
-            <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="Pay" />
-
-
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="Pay" class="pay-button" />
+            </RadzenStack>
         </RadzenCard>
     </div>
 </div>
@@ -130,6 +142,12 @@
     .grid-button {
         width: 150px;
         height: 100px;
+    }
+
+    .pay-button {
+        width: 200px;
+        height: 100px;
+        margin: 10px;
     }
 
     .selected-button {
@@ -180,6 +198,11 @@
         max-height: 30vh;
         overflow-y: scroll;
     }
+
+    .right-card {
+        width: 500px;
+        background-color: #fafafa;
+    }
 </style>
 
 @code {
@@ -191,7 +214,7 @@
 
     private int selectedCategories = -1;
 
-    private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50, 100 };
+    private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50 };
     private double paidWith = 0.0;
 
     protected override async Task OnInitializedAsync()
@@ -317,16 +340,14 @@
             var drink = order.Key;
             var quantityOrdered = order.Value;
 
-            // Find the stock item for the ordered drink
             var stockItem = drinkMenu.Values
-                .SelectMany(category => category) // Flatten the grouped stock items
+                .SelectMany(category => category)
                 .FirstOrDefault(si => si.Drink.Id == drink.Id);
 
             if (stockItem != null && stockItem.Quantity >= quantityOrdered)
             {
                 stockItem.Quantity -= quantityOrdered;
 
-                // If the stock item runs out, remove it from the menu
                 if (stockItem.Quantity == 0)
                 {
                     var category = drinkMenu.FirstOrDefault(c => c.Value.Contains(stockItem)).Key;
@@ -334,7 +355,7 @@
 
                     if (!drinkMenu[category].Any())
                     {
-                        drinkMenu.Remove(category); // Remove the empty category
+                        drinkMenu.Remove(category);
                     }
                 }
             }
@@ -346,7 +367,6 @@
         this.CalculateBill();
         paidWith = 0.0;
 
-        // Notify user of successful payment
         NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
     }
 
@@ -354,6 +374,15 @@
     private void addCashAmount(double cashAmount)
     {
         paidWith += cashAmount;
+    }
+
+    private string GetButtonStyle(int categoryId, string categoryColor)
+    {
+        var backgroundColor = selectedCategories.Equals(categoryId) ? "blue" : categoryColor;
+
+        var textColor = GetTextColor(backgroundColor);
+
+        return $"background-color: {backgroundColor} !important; color: {textColor};";
     }
 
     private string GetTextColor(string backgroundColor)
