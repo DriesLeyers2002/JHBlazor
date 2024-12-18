@@ -7,6 +7,7 @@
 @rendermode InteractiveServer
 @inject AppDbContext _dbContext
 @inject NotificationService NotificationService
+@inject PayconiqService PayconiqService
 
 <PageTitle>Menu</PageTitle>
 
@@ -335,6 +336,10 @@
 
     private async Task Pay()
     {
+        String temp = await StartPayment();
+
+        Console.WriteLine(temp);
+
         foreach (var order in orders)
         {
             var drink = order.Key;
@@ -368,6 +373,15 @@
         paidWith = 0.0;
 
         NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
+    }
+
+    private async Task<String> StartPayment()
+    {
+        var res = await PayconiqService.CreatePayment(10.00m);
+
+        var qrUrl = res["_links"]["qrcode"]["href"];
+
+        return "";
     }
 
 
