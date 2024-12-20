@@ -11,14 +11,10 @@
     using System.Threading.Tasks;
 
     public class PayconiqService // QR code: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da11a5a2324a46e890a945%2FPOS00001
-    {
-        private readonly HttpClient _httpClient;
+    {                            //          https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001
         private readonly IConfiguration _configuration;
         public PayconiqService(HttpClient httpClient, IConfiguration configuration)
         {
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri("https://api.ext.payconiq.com/v3/payments"); // test
-            //_httpClient.BaseAddress = new Uri("https://api.payconiq.com/v3/payments"); // prod
             _configuration = configuration;
         }
 
@@ -53,8 +49,7 @@
             };
 
             // Serialize the payload to JSON
-            var jsonContent = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(payload),
+            var jsonContent = new StringContent(JsonSerializer.Serialize(payload),
                 Encoding.UTF8,
                 "application/json"
             );
