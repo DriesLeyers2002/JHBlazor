@@ -110,7 +110,7 @@
         </RadzenCard>
         <RadzenCard class="right-card" Style="margin-top: 30px">
             <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="Pay" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="() => Pay(true)" class="pay-button" />
             </RadzenStack>
 
             <hr />
@@ -132,7 +132,7 @@
             </RadzenStack>
 
             <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="Pay" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="() => Pay(false)" class="pay-button" />
             </RadzenStack>
         </RadzenCard>
     </div>
@@ -334,11 +334,12 @@
         }
     }
 
-    private async Task Pay()
+    private async Task Pay(bool card)
     {
-        String temp = await StartPayment();
-
-        Console.WriteLine(temp);
+        if (card)
+        {
+            await StartPayment();
+        }
 
         foreach (var order in orders)
         {
@@ -375,13 +376,9 @@
         NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
     }
 
-    private async Task<String> StartPayment()
+    private async Task StartPayment()
     {
-        var res = await PayconiqService.CreatePayment(10.00m);
-
-        var qrUrl = res["_links"]["qrcode"]["href"];
-
-        return "";
+        await PayconiqService.CreatePayment(bill);
     }
 
 

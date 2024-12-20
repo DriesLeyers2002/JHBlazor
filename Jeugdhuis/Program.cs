@@ -8,6 +8,7 @@ using Radzen;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient<PayconiqService>();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
