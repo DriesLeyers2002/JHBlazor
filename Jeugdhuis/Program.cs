@@ -36,6 +36,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<DialogService>();
+builder.Services.AddSingleton<NfcService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),

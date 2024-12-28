@@ -1,0 +1,83 @@
+﻿@page "/add-balance-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext _dbContext
+@inject NfcService NfcService
+
+<RadzenFieldset Text="Voeg Balans Handmatig Toe">
+    <p>@statusMessage</p>
+    <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenNumeric @bind-Value="balanceToAdd"
+                               Placeholder="Voer bedrag in (EUR)"
+                               Min="0"
+                               Max="1000"
+                               Style="width: 100%;"
+                               Step="0.01"
+                               Format="C2" />
+                <ValidationMessage For="@(() => balanceToAdd)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" Disabled="@isSubmitDisabled" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private NfcCard nfcCard = new NfcCard();
+    private bool isSubmitDisabled = true;
+    private string statusMessage = "Leg de lidkaart op de NFC reader.";
+    private string detectedCardUid = string.Empty;
+    private int balanceToAdd = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        NfcService.CardDetected += OnCardDetected;
+        NfcService.CardRemoved += OnCardRemoved;
+
+        NfcService.StartListening();
+    }
+
+    private void OnCardDetected(string cardInfo)
+    {
+        detectedCardUid = cardInfo;
+        isSubmitDisabled = false;
+        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Vul het bedrag in en klik op Opslaan om de kaart te schrijven.";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCardRemoved()
+    {
+        isSubmitDisabled = true;
+        statusMessage = "Leg de nieuwe lidkaart op de NFC reader.";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var card = await _dbContext.NfcCards.FirstAsync(x => x.CardId == detectedCardUid);
+        card.Balance += balanceToAdd;
+
+        DialogService.Close(card);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+        NfcService.StopListening();
+    }
+}

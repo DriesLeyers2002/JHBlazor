@@ -86,7 +86,6 @@
             _dbContext.Update(boardmember);
             await _dbContext.SaveChangesAsync();
 
-            boardmembers.Remove(boardmember);
             await grid.Reload();
 
             NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"{boardmember.UserName} is gedeactiveerd.");
