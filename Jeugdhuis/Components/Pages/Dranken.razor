@@ -16,7 +16,7 @@
 
 <h1>Dranken</h1>
 
-<RadzenButton Text="Drankje toevoegen" Click=@OpenAddDrinkDialog Icon ="add" />
+<RadzenButton Text="Drankje toevoegen" Click="@OpenAddDrinkDialog" Icon="add" Style="margin-bottom: 10px;" />
 
 <RadzenDataGrid @ref="grid" Data="@drinks" TItem="Drink" ColumnWidth="200px">
     <Columns>

@@ -15,11 +15,6 @@
 
 <div style="display: flex">
     <div style="width: 70%" class="block">
-        @* Style=@($"background-color: {categoryDrinkPair.Key.Color}; color: white;")
-        class="@(selectedCategories.Equals(categoryDrinkPair.Key.Id) ? "selected-button grid-button" : "grid-button")"
-
-        *@
-
         <RadzenRow class="rz-p-0" Style="margin-bottom: 20px" Gap="10px">
             @if (drinkMenu.Any())
             {
@@ -35,7 +30,6 @@
                 }
             }
         </RadzenRow>
-
 
         <RadzenRow class="rz-p-0" Gap="10px">
             @if (drinkMenu.Any())
