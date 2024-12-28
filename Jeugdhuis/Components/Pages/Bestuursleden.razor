@@ -5,6 +5,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @inject AppDbContext _dbContext
+@inject UserManager<Boardmember> UserManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject UserManager<Boardmember> UserManager
@@ -14,6 +15,8 @@
 <PageTitle>Bestuursleden</PageTitle>
 
 <h1>Bestuursleden</h1>
+
+<RadzenButton Text="Gebruiker toevoegen" Click=@OpenAddBestuurslidDialog Icon="add" />
 
 <RadzenDataGrid @ref="grid" Data="@boardmembers" TItem="Boardmember" ColumnWidth="200px">
     <Columns>
@@ -80,13 +83,13 @@
         try
         {
             boardmember.IsActive = false;
-            _dbContext.Update(boardmember); 
-            await _dbContext.SaveChangesAsync(); 
+            _dbContext.Update(boardmember);
+            await _dbContext.SaveChangesAsync();
 
-            boardmembers.Remove(boardmember); 
-            await grid.Reload(); 
+            boardmembers.Remove(boardmember);
+            await grid.Reload();
 
-            NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"{boardmember.UserName} is gedeactiveerd."); 
+            NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"{boardmember.UserName} is gedeactiveerd.");
         }
         catch (Exception ex)
         {
@@ -107,16 +110,57 @@
         try
         {
             var hasher = new PasswordHasher<Boardmember>();
-            boardmember.PasswordHash = hasher.HashPassword(boardmember, newPinCode); 
+            boardmember.PasswordHash = hasher.HashPassword(boardmember, newPinCode);
 
-            _dbContext.Update(boardmember); 
-            await _dbContext.SaveChangesAsync(); 
+            _dbContext.Update(boardmember);
+            await _dbContext.SaveChangesAsync();
 
-            NotificationService.Notify(NotificationSeverity.Success, "Pincode gewijzigd", $"De pincode van {boardmember.UserName} is succesvol gewijzigd."); 
+            NotificationService.Notify(NotificationSeverity.Success, "Pincode gewijzigd", $"De pincode van {boardmember.UserName} is succesvol gewijzigd.");
         }
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het wijzigen van de pincode voor {boardmember.UserName}.");
         }
     }
+
+    private async Task OpenAddBestuurslidDialog()
+    {
+        var hasher = new PasswordHasher<Boardmember>();
+
+        var result = await DialogService.OpenAsync<AddBestuurslidDialog>("Bestuurslid toevoegen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            var returnedUser = result.Item1;
+            var returnedRoles = result.Item2;
+
+            returnedUser.PasswordHash = hasher.HashPassword(null, returnedUser.PasswordHash);
+            returnedUser.NormalizedUserName = returnedUser.UserName.ToUpper();
+            returnedUser.NormalizedEmail = returnedUser.Email.ToUpper();
+
+            _dbContext.Boardmembers.Add(returnedUser);
+            await _dbContext.SaveChangesAsync();
+
+            var addRolesResult = await UserManager.AddToRolesAsync(returnedUser, returnedRoles);
+            if (!addRolesResult.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Roltoewijzing Mislukt",
+                        Detail = "Kon de rollen niet toevoegen aan de gebruiker."
+                    });
+                return;
+            }
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Bestuurslid met succes toegevoegd!",
+                    Detail = $"U heeft met succes {returnedUser.UserName} toegevoegd."
+                });
+        }
+    }
+
 }

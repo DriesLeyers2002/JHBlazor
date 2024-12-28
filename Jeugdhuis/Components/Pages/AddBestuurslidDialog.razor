@@ -1,0 +1,96 @@
+﻿@page "/add-bestuurslid-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject UserManager<Boardmember> UserManager
+@inject AppDbContext _dbContext
+
+<RadzenFieldset Text="Voeg Nieuwe Gebruiker Toe">
+    <EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="user.UserName" Placeholder="Voornaam" Style="width: 100%;" />
+                <ValidationMessage For="@(() => user.UserName)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="user.Email" type="email" Placeholder="Email" Style="width: 100%;" />
+                <ValidationMessage For="@(() => user.Email)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="user.PhoneNumber" type="tel" Placeholder="Telefoonnummer" Style="width: 100%;" />
+                <ValidationMessage For="@(() => user.PhoneNumber)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <div style="position: relative;">
+                    <RadzenTextBox @bind-Value="user.PasswordHash"
+                                   type="@(isPinVisible ? "text" : "password")"
+                                   Placeholder="Pincode"
+                                   Style="width: 100%; padding-right: 2rem;"
+                                   MaxLength="4"
+                                   @oninput="@(e => e.Value = new string(e.Value.ToString().Where(char.IsDigit).ToArray()))" />
+                    <ValidationMessage For="@(() => user.PasswordHash)" />
+
+                    <button type="button"
+                            style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer;"
+                            @onclick="TogglePinVisibility">
+                        <i class="@(isPinVisible ? "fa fa-eye-slash" : "fa fa-eye")"></i>
+                    </button>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenDropDown Data="@roles"
+                                @bind-Value="selectedRoles"
+                                AllowMultiple="true"
+                                Placeholder="Selecteer Rollen"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private Boardmember user = new Boardmember();
+    private bool isPinVisible = false;
+
+    private List<IdentityRole> roles = new List<IdentityRole>();
+    private List<string> selectedRoles = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await _dbContext.Roles.ToListAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var result = new Tuple<Boardmember, List<string>>(user, selectedRoles);
+        DialogService.Close(result);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+
+    private void TogglePinVisibility()
+    {
+        isPinVisible = !isPinVisible;
+    }
+}

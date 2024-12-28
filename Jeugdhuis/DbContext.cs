@@ -135,9 +135,9 @@ public class AppDbContext : IdentityDbContext<Boardmember>
 
 
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 } },
-            new User { Id = 2, FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Address = "456 Elm St", Years = new List<int> { 2024 } },
-            new User { Id = 3, FirstName = "Alice", LastName = "Johnson", Email = "alica.johnson@example.com", Address = "789 Maple St", Years = new List<int> { 2022 } }
+            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 }, PhoneNumber = "123456789"},
+            new User { Id = 2, FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Address = "456 Elm St", Years = new List<int> { 2024 }, PhoneNumber = "123456789" },
+            new User { Id = 3, FirstName = "Alice", LastName = "Johnson", Email = "alica.johnson@example.com", Address = "789 Maple St", Years = new List<int> { 2022 }, PhoneNumber = "123456789" }
         );
 
         modelBuilder.Entity<IdentityRole>().HasData(adminRole, voorzitterRole, drankmeesterRole);

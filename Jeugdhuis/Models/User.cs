@@ -8,5 +8,6 @@
         public string Email { get; set; }
         public string Address { get; set; }
         public List<int> Years { get; set; }
+        public string PhoneNumber { get; set; }
     }
 }
