@@ -1,0 +1,79 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Jeugdhuis.Models
+
+<DialogTemplate>
+    <h3>Wijzig Drankje</h3>
+    <div class="form-group">
+        <label>Naam:</label>
+        <input type="text" @bind="drink.Name" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Prijs:</label>
+        <RadzenNumeric @bind-Value="drink.Price" Min="0" Style="width: 100%;" />
+    </div>
+    <div class="form-group">
+        <label>Prijs op Feest:</label>
+        <RadzenNumeric @bind-Value="drink.PriceAtParty" Min="0" Style="width: 100%;" />
+    </div>
+    <div class="form-group">
+        <label>Categorie:</label>
+        <RadzenDropDown @bind-Value="drink.CategoryId" Data="@categories" TextProperty="Name" ValueProperty="Id" Style="width: 100%;" />
+    </div>
+    <div class="form-group">
+        <label>Alleen beschikbaar op Feest:</label>
+        <RadzenCheckBox @bind-Value="drink.IsOnlyAtParty" />
+    </div>
+    <div class="mt-3">
+        <RadzenButton Text="Bevestig" ButtonStyle="ButtonStyle.Primary" Click="HandleConfirm" />
+        <RadzenButton Text="Annuleer" ButtonStyle="ButtonStyle.Secondary" Click="HandleCancel" />
+    </div>
+</DialogTemplate>
+
+@code {
+    [Inject]
+    private DialogService DialogService { get; set; }
+
+    [Inject]
+    private NotificationService NotificationService { get; set; }
+
+    [Parameter]
+    public Drink Drink { get; set; }
+
+    [Parameter]
+    public EventCallback<Drink> OnConfirm { get; set; }
+
+    private List<Category> categories; 
+    private Drink drink;
+
+    protected override void OnInitialized()
+    {
+        drink = new Drink
+        {
+            Id = Drink.Id,
+            Name = Drink.Name,
+            Price = Drink.Price,
+            PriceAtParty = Drink.PriceAtParty,
+            IsOnlyAtParty = Drink.IsOnlyAtParty,
+            CategoryId = Drink.CategoryId,
+            Category = Drink.Category
+        };
+    }
+
+    private async Task HandleConfirm()
+    {
+        if (string.IsNullOrEmpty(drink.Name) || drink.Price < 0 || drink.PriceAtParty < 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Fout", "Controleer alle velden. Naam moet ingevuld zijn en prijzen moeten positief zijn.");
+            return;
+        }
+
+        await OnConfirm.InvokeAsync(drink); 
+        DialogService.Close();
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+}
