@@ -17,7 +17,7 @@
     <RadzenDropDown TValue="int" Value="@int.Parse(value)" Data="@years" Change="@(args => OnYearChange(args))" Style="width: 100%; max-width: 400px;" Name="DropDownChangeEvent" />
 </RadzenStack>
 
-<RadzenDataGrid @ref="grid" Data="@users" TItem="User" RowSelect="@OnRowSelect" ColumnWidth="200px">
+<RadzenDataGrid @ref="grid" Data="@users" TItem="User" ColumnWidth="200px">
     <Columns>
         <RadzenDataGridColumn TItem="User" Property="Id" Title="ID" Width="50px" />
         <RadzenDataGridColumn TItem="User" Property="FirstName" Title="Voornaam" />
@@ -78,11 +78,6 @@
         await LoadUsersAsync();
     }
 
-    private void OnRowSelect(User user)
-    {
-        Console.WriteLine($"Selected user: {user.FirstName} {user.LastName}");
-    }
-
     private async Task OpenAddUserDialog()
     {
         User result = await DialogService.OpenAsync<AddUserDialog>("Gebruiker toevoegen", null,
@@ -90,18 +85,54 @@
 
         if (result != null)
         {
-            result.Years = new List<int>();
-            result.Years.Add(DateTime.Now.Year);
+            User user = await _dbContext.Users.FirstAsync(x => x.FirstName == result.FirstName && x.LastName == result.LastName);
 
-            _dbContext.Users.Add(result);
-            await _dbContext.SaveChangesAsync();
+            if (user != null)
+            {
+                int year = DateTime.Now.Year;
 
-            NotificationService.Notify(new NotificationMessage
+                //Als lid met deze naam en voornaam al bestaat check dan of het dit jaar al lid is
+                if (user.Years.Contains(year))
                 {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Gebruiker met succes toegevoegd!",
-                    Detail = $"U heeft met succes {result.FirstName} {result.LastName} toegevoegd."
-                });
+                    //Als lid al lid is in het huidig jaar, toon error
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Error",
+                            Detail = $"Er bestaat al een lid voor dit jaar met naam {result.FirstName} {result.LastName}."
+                        });
+                }
+                //Als lid nog geen lid is in huidig jaar maar wel al gevonden in de db voeg dan het huidige jaartal toe
+                else
+                {
+                    user.Years.Add(DateTime.Now.Year);
+
+                    _dbContext.Users.Update(user);
+
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Gebruiker met succes toegevoegd!",
+                            Detail = $"Er bestond al een lid met naam {result.FirstName} {result.LastName}. Hij/zij is nu ook lid voor het huidige jaar."
+                        });
+                }
+            }
+            else
+            {
+                result.Years = new List<int>();
+                result.Years.Add(DateTime.Now.Year);
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Gebruiker met succes toegevoegd!",
+                        Detail = $"U heeft met succes {result.FirstName} {result.LastName} toegevoegd."
+                    });
+
+                _dbContext.Users.Add(result);
+            }
+
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

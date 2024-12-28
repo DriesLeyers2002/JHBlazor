@@ -26,6 +26,11 @@
                 <RadzenTextBox @bind-Value="user.Address" Placeholder="Adres" Style="width: 100%;" />
                 <ValidationMessage For="@(() => user.Address)" />
             </RadzenColumn>
+
+             <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="user.PhoneNumber" Placeholder="GSM Nummer" Style="width: 100%;" />
+                <ValidationMessage For="@(() => user.PhoneNumber)" />
+            </RadzenColumn>
         </RadzenRow>
 
         <RadzenRow Style="margin-top: 20px;">
