@@ -54,6 +54,10 @@
                                         {
                                             @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
                                         }
+                                        else if (isParty)
+                                        {
+                                            @((MarkupString)$"{stock.Name}<br />{stock.PriceAtParty:0.00}")
+                                        }
                                         else
                                         {
                                             @((MarkupString)$"{stock.Name}<br />{stock.Price:0.00}")
@@ -75,6 +79,10 @@
                                             @if (isTappersPrijs)
                                             {
                                                 @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
+                                            }
+                                            else if (isParty)
+                                            {
+                                                @((MarkupString)$"{stock.Name}<br />{stock.PriceAtParty:0.00}")
                                             }
                                             else
                                             {
