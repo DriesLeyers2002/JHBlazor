@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Jeugdhuis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241228125731_AddLidPhoneNumber")]
-    partial class AddLidPhoneNumber
+    [Migration("20241228131256_ChangesTemp")]
+    partial class ChangesTemp
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,7 @@ namespace Jeugdhuis.Migrations
             modelBuilder.Entity("Jeugdhuis.Models.Boardmember", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -96,16 +95,16 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "35fe316c-06a7-4b80-a6bb-c84c50a05248",
+                            ConcurrencyStamp = "198310fa-ca81-4b5f-b922-dd96ba71f0a2",
                             Email = "dries@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "DRIES@EXAMPLE.COM",
                             NormalizedUserName = "DRIES",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPokb2wgK3xnynTB6x+0gfsuQkOuV++hba7NtwrXzIVtow3Bf1/3BcK5jQsIM311kw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELETKnI8fVbzkcVsPO5o3DmAKDamlNgPlm5kSq/ez+o7APPNk6p+ywXrcgDyMsOMqw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "c140d403-c425-46f8-a9d4-e42842aadce5",
+                            SecurityStamp = "e9a7491f-1e8a-45af-a67b-c86ce77d4264",
                             TwoFactorEnabled = false,
                             UserName = "Dries"
                         },
@@ -113,16 +112,16 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "2",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "caf5d8d2-80d8-4989-8444-51e7da000507",
+                            ConcurrencyStamp = "96cf0ef4-d6f7-47c3-ac68-ebd8925246f9",
                             Email = "vincent@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "VINCENT@EXAMPLE.COM",
                             NormalizedUserName = "VINCENT",
-                            PasswordHash = "AQAAAAIAAYagAAAAELSciYaLsT8PV4nYjsmncYvgRj9kmx9uB156h3uAfYXBuGuqN750Gv7b2zlRES9TUw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFnVY+OVRn7+zTZjayoDu4LvHZeEKeIeI2jg3cgk+zkQUqNQAriqCT7BFems2y+u2g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "8510b940-fa5f-4d41-999a-fa3fcf205b68",
+                            SecurityStamp = "d1558f28-2931-476b-a121-8b31ccbbdcab",
                             TwoFactorEnabled = false,
                             UserName = "Vincent"
                         },
@@ -130,18 +129,65 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "3",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "416d941e-c9bd-4f1b-b84d-f89ffff5883e",
+                            ConcurrencyStamp = "c0cbc07a-7442-4a6c-b516-46d72593b527",
                             Email = "simon@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "SIMON@EXAMPLE.COM",
                             NormalizedUserName = "SIMON",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHMzqsMBNS/PQWf6jj+78CYhwFv+zyIGdOnOZA8TGOrah/YMgqfwg2GrXTKOdIgkgQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEP8EUvleR6k5vfNjOGtpTchoW1o36B/A4tr/E/Swsdo2/k/t6CxAGX+OQfMaJ7Jgzw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "313930da-9251-404d-beff-e8960adb7c94",
+                            SecurityStamp = "00b595a2-8e1c-4d3a-94e5-8271a90f8e58",
                             TwoFactorEnabled = false,
                             UserName = "Simon"
+                        });
+                });
+
+            modelBuilder.Entity("Jeugdhuis.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Category");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Color = "#FFA500",
+                            Name = "snacks"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Color = "#FFD700",
+                            Name = "bier"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Color = "#00BFFF",
+                            Name = "frisdrank"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Color = "#8B0000",
+                            Name = "wijn"
                         });
                 });
 
@@ -153,9 +199,8 @@ namespace Jeugdhuis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -175,13 +220,15 @@ namespace Jeugdhuis.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Drinks");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            Category = "snacks",
+                            CategoryId = 1,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "AirFryer snacks",
@@ -191,7 +238,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 2,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Bier van de maand",
@@ -201,7 +248,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 3,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Bruiswater",
@@ -211,7 +258,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 4,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Buta ranzige Biru",
@@ -221,7 +268,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 5,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Chouffe",
@@ -231,7 +278,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 6,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Cherry Chouffe",
@@ -241,7 +288,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 7,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Cola",
@@ -251,7 +298,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 8,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Cola zero",
@@ -261,7 +308,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 9,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Cornet",
@@ -271,7 +318,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 10,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Duvel",
@@ -281,7 +328,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 11,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Fanta",
@@ -291,7 +338,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 12,
-                            Category = "wijn",
+                            CategoryId = 4,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Fles Cava",
@@ -301,7 +348,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 13,
-                            Category = "wijn",
+                            CategoryId = 4,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Glas Cava",
@@ -311,7 +358,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 14,
-                            Category = "wijn",
+                            CategoryId = 4,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Glas Rosé",
@@ -321,7 +368,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 15,
-                            Category = "wijn",
+                            CategoryId = 4,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Glas witte wijn",
@@ -331,7 +378,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 16,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Gouden Carolus Classic",
@@ -341,7 +388,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 17,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Gouden Carolus tripel",
@@ -351,7 +398,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 18,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Groene",
@@ -361,7 +408,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 19,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Ice Tea",
@@ -371,7 +418,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 20,
-                            Category = "Mietenbier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Jupiler 0.0",
@@ -381,7 +428,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 21,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Kriek",
@@ -391,7 +438,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 22,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Maes fles",
@@ -401,7 +448,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 23,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Maes tap",
@@ -411,7 +458,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 24,
-                            Category = "snacks",
+                            CategoryId = 1,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Pizna baguette",
@@ -421,7 +468,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 25,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Plat water",
@@ -431,7 +478,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 26,
-                            Category = "frisdrank",
+                            CategoryId = 3,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Sprite",
@@ -441,7 +488,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 27,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Stella fles",
@@ -451,7 +498,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 28,
-                            Category = "bier",
+                            CategoryId = 2,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Stella tap",
@@ -461,7 +508,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 29,
-                            Category = "snacks",
+                            CategoryId = 1,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Toogkletser",
@@ -471,7 +518,7 @@ namespace Jeugdhuis.Migrations
                         new
                         {
                             Id = 30,
-                            Category = "snacks",
+                            CategoryId = 1,
                             IsActive = true,
                             IsOnlyAtPart = false,
                             Name = "Zakje chips ouleh",
@@ -499,6 +546,188 @@ namespace Jeugdhuis.Migrations
                     b.HasIndex("DrinkId");
 
                     b.ToTable("StockItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DrinkId = 1,
+                            Quantity = 20
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DrinkId = 2,
+                            Quantity = 15
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DrinkId = 3,
+                            Quantity = 25
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DrinkId = 4,
+                            Quantity = 10
+                        },
+                        new
+                        {
+                            Id = 5,
+                            DrinkId = 5,
+                            Quantity = 12
+                        },
+                        new
+                        {
+                            Id = 6,
+                            DrinkId = 6,
+                            Quantity = 18
+                        },
+                        new
+                        {
+                            Id = 7,
+                            DrinkId = 7,
+                            Quantity = 30
+                        },
+                        new
+                        {
+                            Id = 8,
+                            DrinkId = 8,
+                            Quantity = 28
+                        },
+                        new
+                        {
+                            Id = 9,
+                            DrinkId = 9,
+                            Quantity = 14
+                        },
+                        new
+                        {
+                            Id = 10,
+                            DrinkId = 10,
+                            Quantity = 16
+                        },
+                        new
+                        {
+                            Id = 11,
+                            DrinkId = 11,
+                            Quantity = 22
+                        },
+                        new
+                        {
+                            Id = 12,
+                            DrinkId = 12,
+                            Quantity = 5
+                        },
+                        new
+                        {
+                            Id = 13,
+                            DrinkId = 13,
+                            Quantity = 8
+                        },
+                        new
+                        {
+                            Id = 14,
+                            DrinkId = 14,
+                            Quantity = 10
+                        },
+                        new
+                        {
+                            Id = 15,
+                            DrinkId = 15,
+                            Quantity = 12
+                        },
+                        new
+                        {
+                            Id = 16,
+                            DrinkId = 16,
+                            Quantity = 7
+                        },
+                        new
+                        {
+                            Id = 17,
+                            DrinkId = 17,
+                            Quantity = 7
+                        },
+                        new
+                        {
+                            Id = 18,
+                            DrinkId = 18,
+                            Quantity = 26
+                        },
+                        new
+                        {
+                            Id = 19,
+                            DrinkId = 19,
+                            Quantity = 20
+                        },
+                        new
+                        {
+                            Id = 20,
+                            DrinkId = 20,
+                            Quantity = 18
+                        },
+                        new
+                        {
+                            Id = 21,
+                            DrinkId = 21,
+                            Quantity = 9
+                        },
+                        new
+                        {
+                            Id = 22,
+                            DrinkId = 22,
+                            Quantity = 14
+                        },
+                        new
+                        {
+                            Id = 23,
+                            DrinkId = 23,
+                            Quantity = 13
+                        },
+                        new
+                        {
+                            Id = 24,
+                            DrinkId = 24,
+                            Quantity = 6
+                        },
+                        new
+                        {
+                            Id = 25,
+                            DrinkId = 25,
+                            Quantity = 25
+                        },
+                        new
+                        {
+                            Id = 26,
+                            DrinkId = 26,
+                            Quantity = 27
+                        },
+                        new
+                        {
+                            Id = 27,
+                            DrinkId = 27,
+                            Quantity = 11
+                        },
+                        new
+                        {
+                            Id = 28,
+                            DrinkId = 28,
+                            Quantity = 11
+                        },
+                        new
+                        {
+                            Id = 29,
+                            DrinkId = 29,
+                            Quantity = 8
+                        },
+                        new
+                        {
+                            Id = 30,
+                            DrinkId = 30,
+                            Quantity = 21
+                        });
                 });
 
             modelBuilder.Entity("Jeugdhuis.Models.User", b =>
@@ -573,8 +802,7 @@ namespace Jeugdhuis.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -633,73 +861,13 @@ namespace Jeugdhuis.Migrations
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.ToTable("IdentityUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -718,7 +886,7 @@ namespace Jeugdhuis.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -730,20 +898,17 @@ namespace Jeugdhuis.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -755,12 +920,10 @@ namespace Jeugdhuis.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("RoleId")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -799,16 +962,13 @@ namespace Jeugdhuis.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Value")
                         .HasColumnType("longtext");
@@ -816,6 +976,17 @@ namespace Jeugdhuis.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Jeugdhuis.Models.Drink", b =>
+                {
+                    b.HasOne("Jeugdhuis.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("Jeugdhuis.Models.StockItem", b =>

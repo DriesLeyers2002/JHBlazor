@@ -109,18 +109,11 @@
 
         </RadzenCard>
         <RadzenCard class="right-card" Style="margin-top: 30px">
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Card" Click="() => Pay(true)" class="pay-button" />
-            </RadzenStack>
-
             <hr />
-
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-p-0">
                 <RadzenText TextStyle="TextStyle.H3">Wisselgeld </RadzenText>
                 <RadzenText TextStyle="TextStyle.H3"><b>€@((bill - paidWith).ToString("0.00"))</b></RadzenText>
             </RadzenStack>
-
-
             <RadzenText TextStyle="TextStyle.H5">Paid with </RadzenText>
             <RadzenNumeric Style="width: 100%" @bind-Value=@paidWith />
 
@@ -130,11 +123,12 @@
                     <RadzenButton ButtonStyle="ButtonStyle.Base" Text="@($"€{cashAmount}")" Click="() => addCashAmount(cashAmount)" />
                 }
             </RadzenStack>
-
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Pay Cash" Click="() => Pay(false)" class="pay-button" />
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly" Gap="4px">
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Payconiq" Click="() => Pay(true)" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Cash" Click="() => Pay(false)" class="pay-button" />
             </RadzenStack>
         </RadzenCard>
+
     </div>
 </div>
 

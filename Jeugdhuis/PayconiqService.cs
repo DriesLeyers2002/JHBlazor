@@ -10,8 +10,8 @@
     using System.Text.Json.Nodes;
     using System.Threading.Tasks;
 
-    public class PayconiqService // QR code: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da11a5a2324a46e890a945%2FPOS00001
-    {                            //          https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001
+    public class PayconiqService // QR code TEST: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da11a5a2324a46e890a945%2FPOS00001
+    {                            // QR code PROD: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001
         private readonly IConfiguration _configuration;
         public PayconiqService(HttpClient httpClient, IConfiguration configuration)
         {
@@ -34,7 +34,7 @@
                 amount = amountString,
                 currency = "EUR",
                 callbackUrl = "https://dummy.network/api/v1/orders/payconiq",
-                //description = "Test payment 12345",
+                description = $"Payment by Payconiq GO - JH De Caravan Application - {DateTime.Now}",
                 //reference = "12345",
                 posId = "POS00001",
                 //bulkId = "Bulk-1-200",
