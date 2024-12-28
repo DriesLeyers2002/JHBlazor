@@ -7,7 +7,7 @@
         public double Price { get; set; }
         public double PriceAtParty { get; set; }
         public bool IsActive { get; set; } = true;
-        public bool IsOnlyAtPart { get; set; }
+        public bool IsOnlyAtParty { get; set; }
 
         public int CategoryId { get; set; }
         public Category Category { get; set; }

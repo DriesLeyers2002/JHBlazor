@@ -104,9 +104,6 @@
                 }
             </div>
 
-
-
-
         </RadzenCard>
         <RadzenCard class="right-card" Style="margin-top: 30px">
             <hr />
@@ -262,7 +259,6 @@
         amount = orders.Sum(item => item.Value);
     }
 
-
     private void IncreaseCount(Drink drink)
     {
         var stockItem = drinkMenu
@@ -272,19 +268,10 @@
         if (stockItem == null)
         {
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Stock empty" });
-
             return;
         }
 
         var currentOrderCount = orders.ContainsKey(drink) ? orders[drink] : 0;
-
-        if (currentOrderCount >= stockItem.Quantity)
-        {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Stock empty" });
-
-            return;
-        }
-
 
         if (orders.ContainsKey(drink))
         {
@@ -334,34 +321,6 @@
         {
             await StartPayment();
         }
-
-        foreach (var order in orders)
-        {
-            var drink = order.Key;
-            var quantityOrdered = order.Value;
-
-            var stockItem = drinkMenu.Values
-                .SelectMany(category => category)
-                .FirstOrDefault(si => si.Drink.Id == drink.Id);
-
-            if (stockItem != null && stockItem.Quantity >= quantityOrdered)
-            {
-                stockItem.Quantity -= quantityOrdered;
-
-                if (stockItem.Quantity == 0)
-                {
-                    var category = drinkMenu.FirstOrDefault(c => c.Value.Contains(stockItem)).Key;
-                    drinkMenu[category].Remove(stockItem);
-
-                    if (!drinkMenu[category].Any())
-                    {
-                        drinkMenu.Remove(category);
-                    }
-                }
-            }
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         orders.Clear();
         this.CalculateBill();
