@@ -1,0 +1,204 @@
+﻿@page "/lidkaarten"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@inject AppDbContext _dbContext
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@rendermode InteractiveServer
+
+<PageTitle>Lidkaarten</PageTitle>
+
+<h1>Leden</h1>
+<RadzenButton Text="Lidkaart toevoegen" Click=@OpenAddCardDialog Icon="add" />
+
+<RadzenDataGrid @ref="grid" Data="@nfcCards" TItem="NfcCard" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="NfcCard" Property="Id" Title="ID" Width="50px" />
+        <RadzenDataGridColumn TItem="NfcCard" Property="CardId" Title="Card ID" />
+        <RadzenDataGridColumn TItem="NfcCard" Title="Naam Lid">
+            <Template Context="data">
+                @($"{data.User.FirstName} {data.User.LastName}")
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="NfcCard" Property="Balance" Title="Balans" />
+        <RadzenDataGridColumn TItem="NfcCard" Property="ExpiryDate" Title="Vervaldatum" />
+        <RadzenDataGridColumn TItem="NfcCard" Property="IsActive" Title="Actief" />
+        <RadzenDataGridColumn TItem="NfcCard" Title="Acties" Width="100px">
+            <Template Context="nfcCard">
+                @if (nfcCard.IsActive)
+                {
+                    <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
+                                  Click="@(args => ConfirmDelete(nfcCard))" />
+                }
+                else
+                {
+                    <RadzenButton Icon="check" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
+                                  Click="@(args => ConfirmMakeActive(nfcCard))" />
+                }
+                
+                <RadzenButton Icon="event" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
+                              Click="@(args => ConfirmCardRenewal(nfcCard))" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private ICollection<NfcCard> nfcCards = new List<NfcCard>(); 
+    private RadzenDataGrid<NfcCard> grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCardsAsync(); 
+        await grid.Reload();
+    }
+
+    private async Task LoadCardsAsync()
+    {
+        try
+        {
+            var allCards = await _dbContext.NfcCards.Include(x => x.User).ToListAsync();
+            nfcCards = allCards;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching users: {ex.Message}");
+        }
+    }
+
+    private async Task ConfirmDelete(NfcCard card)
+    {
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u de lidkaart van {card.User.FirstName} {card.User.LastName} wilt verwijderen?", "Bevestig verwijdering",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await DeleteCard(card);
+        }
+    }
+
+    private async Task DeleteCard(NfcCard card)
+    {
+        try
+        {
+            card.IsActive = false;
+            _dbContext.Update(card);
+            await _dbContext.SaveChangesAsync();
+
+            await grid.Reload();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"De kaart van {card.User.FirstName} {card.User.LastName} is gedeactiveerd.");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het deactiveren van de kaart van {card.User.FirstName} {card.User.LastName}.");
+        }
+    }
+
+    private async Task ConfirmCardRenewal(NfcCard card)
+    {
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u de lidkaart van {card.User.FirstName} {card.User.LastName} met één jaar wilt verlengen?", "Bevestig verlenging",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await RenewCard(card);
+        }
+    }
+
+    private async Task ConfirmMakeActive(NfcCard nfcCard)
+    {
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u de lidkaart van {nfcCard.User.FirstName} {nfcCard.User.LastName} terug actief wilt maken?", "Bevestig keuze",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await MakeCardActive(nfcCard);
+        }
+    }
+
+    private async Task MakeCardActive(NfcCard nfcCard)
+    {
+        try
+        {
+            nfcCard.IsActive = true;
+            _dbContext.Update(nfcCard);
+            await _dbContext.SaveChangesAsync();
+
+            await grid.Reload();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Actief", $"De kaart van {nfcCard.User.FirstName} {nfcCard.User.LastName} is terug actief gemaakt.");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het opnieuw activeren van de kaart van {nfcCard.User.FirstName} {nfcCard.User.LastName}.");
+        }
+    }
+
+    private async Task RenewCard(NfcCard card)
+    {
+        try
+        {
+            card.ExpiryDate = new DateTime(DateTime.Now.Year + 1, 12, 31, 23, 59, 59);
+
+            _dbContext.Update(card);
+            await _dbContext.SaveChangesAsync();
+
+            await grid.Reload();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Verlengd", $"De kaart van {card.User.FirstName} {card.User.LastName} is met één jaar verlengd..");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het verlengen van de kaart van {card.User.FirstName} {card.User.LastName}.");
+        }
+    }
+
+    private async Task OpenAddCardDialog()
+    {
+        NfcCard result = await DialogService.OpenAsync<AddNfcCardDialog>("Lidkaart toevoegen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            var doesUserAlreadyHaveACard = await _dbContext.NfcCards.AnyAsync(x => x.User.Id == result.User.Id);
+
+            if (doesUserAlreadyHaveACard)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Summary = "Gebruiker heeft al een lidkaart",
+                        Detail = $"{result.User.FirstName} {result.User.LastName} heeft al een lidkaart."
+                    });
+            }
+            else
+            {
+                try
+                {
+                    result.CardId = Guid.NewGuid();
+
+                    //VOEG DIALOOG IN OM KAART TE WRITEN MET DE HIERBOVEN GEGENEREERDE GUID
+
+                    _dbContext.NfcCards.Add(result);
+                    await _dbContext.SaveChangesAsync();
+
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Lidkaart toegevoegd!",
+                            Detail = $"U heeft met succes een lidkaart voor {result.User.FirstName} {result.User.LastName} geactiveerd."
+                        });
+
+                    grid.Reload();
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
+                }
+            }
+
+        }
+    }
+}

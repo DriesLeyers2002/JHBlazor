@@ -11,6 +11,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
     public DbSet<StockItem> StockItems { get; set; }
     public DbSet<Boardmember> Boardmembers { get; set; }
     public DbSet<Category> Category { get; set; }
+    public DbSet<NfcCard> NfcCards { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -42,6 +43,12 @@ public class AppDbContext : IdentityDbContext<Boardmember>
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
         });
 
+        modelBuilder.Entity<NfcCard>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(c => c.Id).ValueGeneratedOnAdd();
+        });
+
         modelBuilder.Entity<StockItem>(entity =>
         {
             entity.HasKey(si => si.Id);
@@ -60,10 +67,10 @@ public class AppDbContext : IdentityDbContext<Boardmember>
         });
 
         modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "snacks", Color = "#FFA500" },    
-            new Category { Id = 2, Name = "bier", Color = "#FFD700" },       
-            new Category { Id = 3, Name = "frisdrank", Color = "#00BFFF" },  
-            new Category { Id = 4, Name = "wijn", Color = "#8B0000" }, 
+            new Category { Id = 1, Name = "snacks", Color = "#FFA500" },
+            new Category { Id = 2, Name = "bier", Color = "#FFD700" },
+            new Category { Id = 3, Name = "frisdrank", Color = "#00BFFF" },
+            new Category { Id = 4, Name = "wijn", Color = "#8B0000" },
             new Category { Id = 5, Name = "cocktails", Color = "#D85E5E" },
             new Category { Id = 6, Name = "andere", Color = "#3285a8" }
         );
@@ -137,7 +144,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
 
 
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 }, PhoneNumber = "123456789"},
+            new User { Id = 1, FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Address = "123 Main St", Years = new List<int> { 2023, 2024 }, PhoneNumber = "123456789" },
             new User { Id = 2, FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Address = "456 Elm St", Years = new List<int> { 2024 }, PhoneNumber = "123456789" },
             new User { Id = 3, FirstName = "Alice", LastName = "Johnson", Email = "alica.johnson@example.com", Address = "789 Maple St", Years = new List<int> { 2022 }, PhoneNumber = "123456789" }
         );

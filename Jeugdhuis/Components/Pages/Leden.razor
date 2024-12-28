@@ -44,7 +44,6 @@
     {
         try
         {
-            Console.WriteLine(value);
             var allUsers = await _dbContext.Users.ToListAsync();
             users = allUsers.Where(x => x.Years.Contains(int.Parse(value))).ToList();
         }

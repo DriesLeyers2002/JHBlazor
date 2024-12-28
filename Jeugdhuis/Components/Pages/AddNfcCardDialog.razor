@@ -1,0 +1,59 @@
+﻿@page "/add-nfc-card-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext _dbContext
+
+<RadzenFieldset Text="Voeg Nieuwe Lidkaart Toe">
+    <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenDropDown Data="@users"
+                                @bind-Value="selectedUserId"
+                                Placeholder="Selecteer user"
+                                TextProperty="FirstName"
+                                ValueProperty="Id"
+                                Style="width: 100%;" />
+                <ValidationMessage For="@(() => nfcCard.User)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private NfcCard nfcCard = new NfcCard();
+    private List<User> users = new List<User>();
+    private int selectedUserId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await _dbContext.Users.ToListAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        nfcCard.User = await _dbContext.Users.FirstAsync(x => x.Id == selectedUserId);
+
+        int currentYear = DateTime.Now.Year;
+        nfcCard.ExpiryDate = new DateTime(currentYear, 12, 31, 23, 59, 59);
+        nfcCard.IsActive = true;
+
+        DialogService.Close(nfcCard);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+}
