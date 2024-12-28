@@ -1,14 +1,32 @@
 using Jeugdhuis;
 using Jeugdhuis.Components;
 using Jeugdhuis.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using System.Net;
+using System.Net.Security;
+
+ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) =>
+{
+    // local dev, just approve all certs
+    return true;
+};
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient<PayconiqService>();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+builder.Services.AddControllers();
+builder.Services.AddSignalR();
+
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/octet-stream"]);
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -40,7 +58,20 @@ builder.Services.ConfigureApplicationCookie(opt =>
     opt.EventsType = typeof(CookieEvents);
 });
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Listen(IPAddress.Any, 44300); // For HTTP
+    serverOptions.Listen(IPAddress.Any, 44300, listenOptions => // For HTTPS
+    {
+        listenOptions.UseHttps(); // Ensure you have SSL certificates configured
+    });
+});
+
 var app = builder.Build();
+
+app.MapControllers();
+
+app.UseResponseCompression();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -60,4 +91,10 @@ app.UseMiddleware<BlazorCookieLoginMiddleware>();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+
+
+app.MapHub<PaymentHub>("/paymentHub");
+
+
+
 app.Run();

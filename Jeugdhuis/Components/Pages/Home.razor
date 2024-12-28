@@ -3,11 +3,14 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Jeugdhuis.Models
+@using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject AppDbContext _dbContext
 @inject NotificationService NotificationService
 @inject PayconiqService PayconiqService
+@inject NavigationManager Navigation
+@inject DialogService DialogService
 
 <PageTitle>Menu</PageTitle>
 
@@ -15,6 +18,8 @@
 
 <RadzenToggleButton @bind-Value="isParty" Style="margin-bottom: 5px;" Text="@(isParty ? "Zet feestmodus uit" : "Zet feestmodus aan")" />
 <RadzenToggleButton @bind-Value="isTappersPrijs" Style="margin-bottom: 5px;" Text="@(isTappersPrijs ? "Zet tappersprijzen uit" : "Zet tappersprijzen aan")" />
+
+@statusMessage
 
 <div style="display: flex">
     <div style="width: 70%" class="block">
@@ -249,6 +254,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDrinks();
+        await InitSignalR();
     }
 
     private async Task LoadDrinks()
@@ -256,14 +262,14 @@
         try
         {
             var drinks = await _dbContext.Drinks
-                .Where(x => x.IsActive)
-                .Include(drink => drink.Category)
-                .ToListAsync();
+            .Where(x => x.IsActive)
+            .Include(drink => drink.Category)
+            .ToListAsync();
 
             drinkMenu = drinks
-                .GroupBy(stockItem => stockItem.Category)
-                .OrderBy(group => group.Key)
-                .ToDictionary(group => group.Key, group => group.ToList());
+            .GroupBy(stockItem => stockItem.Category)
+            .OrderBy(group => group.Key)
+            .ToDictionary(group => group.Key, group => group.ToList());
         }
         catch (Exception ex)
         {
@@ -299,8 +305,8 @@
     private void IncreaseCount(Drink drink)
     {
         var stockItem = drinkMenu
-            .SelectMany(category => category.Value)
-            .FirstOrDefault(item => item.Id == drink.Id);
+        .SelectMany(category => category.Value)
+        .FirstOrDefault(item => item.Id == drink.Id);
 
         if (stockItem == null)
         {
@@ -352,23 +358,26 @@
         }
     }
 
+    public string paymentId { get; set; }
+
     private async Task Pay(bool card)
     {
         if (card)
         {
-            await StartPayment();
+            paymentId = await StartPayment();
         }
 
         orders.Clear();
         this.CalculateBill();
         paidWith = 0.0;
 
-        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling uitgevoerd" });
+        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Betaling doorgestuurt" });
     }
 
-    private async Task StartPayment()
+
+    private async Task<string> StartPayment()
     {
-        await PayconiqService.CreatePayment(bill);
+        return (string)(await PayconiqService.CreatePayment(bill))["paymentId"];
     }
 
 
@@ -401,5 +410,59 @@
         double luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
         return luminance > 128 ? "black" : "white";
+    }
+
+    private HubConnection? _hubConnection;
+    private string statusMessage = "Waiting for payment...";
+
+    protected async Task InitSignalR()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/paymentHub"), options =>
+            {
+                options.HttpMessageHandlerFactory = handler =>
+                {
+                    if (handler is HttpClientHandler clientHandler)
+                    {
+                        clientHandler.ServerCertificateCustomValidationCallback =
+                            (sender, certificate, chain, sslPolicyErrors) => true; // Development only
+                    }
+                    return handler;
+                };
+            })
+            .Build();
+
+        _hubConnection.On<string, int>("PaymentReceived", (paymentId, amount) =>
+        {
+            statusMessage = $"Payment {paymentId} of {amount} EUR received.";
+            checkPayment(paymentId);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    public void checkPayment(String paymentId)
+    {
+        if (this.paymentId == paymentId)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling voltooid" });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "eee idk" });
+        }
+    }
+
+    public bool IsConnected =>
+        _hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.StopAsync();
+            await _hubConnection.DisposeAsync();
+        }
     }
 }

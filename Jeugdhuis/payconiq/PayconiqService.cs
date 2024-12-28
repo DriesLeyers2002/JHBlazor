@@ -12,6 +12,7 @@
 
     public class PayconiqService // QR code TEST: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da11a5a2324a46e890a945%2FPOS00001
     {                            // QR code PROD: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001
+                                 // test 2 idk    https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da118da2324a46e890a944%2FPOS00001
         private readonly IConfiguration _configuration;
         public PayconiqService(HttpClient httpClient, IConfiguration configuration)
         {
@@ -23,6 +24,7 @@
             using var client = new HttpClient();
 
             // Define the API endpoint
+            //var requestUri = "https://api.ext.payconiq.com/v3/payments/pos"; // testing
             var requestUri = "https://api.payconiq.com/v3/payments/pos";
             var authToken = _configuration["Payconiq:AuthorizationToken"];
 
@@ -33,11 +35,10 @@
             {
                 amount = amountString,
                 currency = "EUR",
-                callbackUrl = "https://dummy.network/api/v1/orders/payconiq",
+                callbackUrl = "https://2363-81-82-63-164.ngrok-free.app/api/PayconiqWebhook",
+                //callbackUrl = "https://localhost:44300/api/PayconiqWebhook",
                 description = $"Payment by Payconiq GO - JH De Caravan Application - {DateTime.Now}",
-                //reference = "12345",
                 posId = "POS00001",
-                //bulkId = "Bulk-1-200",
                 voucherEligibility = Array.Empty<string>(),
                 //{
                 //new
@@ -45,7 +46,7 @@
                 //    voucherSchemes = new[] { "BEL_MEAL_VOUCHER" },
                 //    amount = 99999
                 //}
-            //}
+                //}
             };
 
             // Serialize the payload to JSON
