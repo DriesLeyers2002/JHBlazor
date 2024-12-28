@@ -13,6 +13,9 @@
 
 <h1>Menu</h1>
 
+<RadzenToggleButton @bind-Value="isParty" Style="margin-bottom: 5px;" Text="@(isParty ? "Zet feestmodus uit" : "Zet feestmodus aan")" />
+<RadzenToggleButton @bind-Value="isTappersPrijs" Style="margin-bottom: 5px;" Text="@(isTappersPrijs ? "Zet tappersprijzen uit" : "Zet tappersprijzen aan")" />
+
 <div style="display: flex">
     <div style="width: 70%" class="block">
         <RadzenRow class="rz-p-0" Style="margin-bottom: 20px" Gap="10px">
@@ -40,16 +43,46 @@
                     {
                         @if (categoryDrinkPair.Value.Any())
                         {
-                            @foreach (var stock in categoryDrinkPair.Value.Where(stock => stock.Quantity > 0))
+                            @foreach (var stock in categoryDrinkPair.Value.Where(x => !x.IsOnlyAtParty))
                             {
                                 <RadzenColumn Size="2" Style="max-width: 150px !important">
                                     <RadzenButton ButtonStyle="ButtonStyle.Base"
-                                                  Click="() => IncreaseCount(stock.Drink)"
+                                                  Click="() => IncreaseCount(stock)"
                                                   class="grid-button"
                                                   Style=@($"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};")>
-                                        @((MarkupString)$"{stock.Drink.Name}<br />{stock.Drink.Price:0.00}")
+                                        @if (isTappersPrijs)
+                                        {
+                                            @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
+                                        }
+                                        else
+                                        {
+                                            @((MarkupString)$"{stock.Name}<br />{stock.Price:0.00}")
+                                        }
+
                                     </RadzenButton>
                                 </RadzenColumn>
+                            }
+
+                            @if (isParty)
+                            {
+                                @foreach (var stock in categoryDrinkPair.Value.Where(x => x.IsOnlyAtParty))
+                                {
+                                    <RadzenColumn Size="2" Style="max-width: 150px !important">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                                      Click="() => IncreaseCount(stock)"
+                                                      class="grid-button"
+                                                      Style=@($"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};")>
+                                            @if (isTappersPrijs)
+                                            {
+                                                @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
+                                            }
+                                            else
+                                            {
+                                                @((MarkupString)$"{stock.Name}<br />{stock.Price:0.00}")
+                                            }
+                                        </RadzenButton>
+                                    </RadzenColumn>
+                                }
                             }
                         }
                     }
@@ -158,8 +191,8 @@
 
     .flex-container {
         display: flex;
-        flex-direction: column; /* Stack rows vertically */
-        gap: 15px; /* Space between rows */
+        flex-direction: column;
+        gap: 15px;
     }
 
     .flex-row {
@@ -192,11 +225,13 @@
 </style>
 
 @code {
-    private Dictionary<Category, List<StockItem>> drinkMenu = new Dictionary<Category, List<StockItem>>();
+    private Dictionary<Category, List<Drink>> drinkMenu = new Dictionary<Category, List<Drink>>();
 
     private Dictionary<Drink, int> orders = new Dictionary<Drink, int>();
     private double bill = 0;
     private double amount = 0;
+    private bool isParty = false;
+    private bool isTappersPrijs = false;
 
     private int selectedCategories = -1;
 
@@ -212,13 +247,13 @@
     {
         try
         {
-            var stockItems = await _dbContext.StockItems.Where(stock => stock.Quantity > 0)
-                .Include(stockItem => stockItem.Drink)
-                .ThenInclude(drink => drink.Category)
+            var drinks = await _dbContext.Drinks
+                .Where(x => x.IsActive)
+                .Include(drink => drink.Category)
                 .ToListAsync();
 
-            drinkMenu = stockItems
-                .GroupBy(stockItem => stockItem.Drink.Category)
+            drinkMenu = drinks
+                .GroupBy(stockItem => stockItem.Category)
                 .OrderBy(group => group.Key)
                 .ToDictionary(group => group.Key, group => group.ToList());
         }
@@ -257,7 +292,7 @@
     {
         var stockItem = drinkMenu
             .SelectMany(category => category.Value)
-            .FirstOrDefault(item => item.Drink.Id == drink.Id);
+            .FirstOrDefault(item => item.Id == drink.Id);
 
         if (stockItem == null)
         {

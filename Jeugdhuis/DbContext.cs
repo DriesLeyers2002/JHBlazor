@@ -63,7 +63,9 @@ public class AppDbContext : IdentityDbContext<Boardmember>
             new Category { Id = 1, Name = "snacks", Color = "#FFA500" },    
             new Category { Id = 2, Name = "bier", Color = "#FFD700" },       
             new Category { Id = 3, Name = "frisdrank", Color = "#00BFFF" },  
-            new Category { Id = 4, Name = "wijn", Color = "#8B0000" }       
+            new Category { Id = 4, Name = "wijn", Color = "#8B0000" }, 
+            new Category { Id = 5, Name = "cocktails", Color = "#D85E5E" },
+            new Category { Id = 6, Name = "andere", Color = "#3285a8" }
         );
 
         modelBuilder.Entity<Drink>().HasData(

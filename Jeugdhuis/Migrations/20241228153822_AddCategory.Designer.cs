@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Jeugdhuis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241228153822_AddCategory")]
+    partial class AddCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,16 +95,16 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "244895b5-0216-49db-b2b7-7417f383b79e",
+                            ConcurrencyStamp = "38fb903f-158e-4fc4-958e-2cf71f3f9a57",
                             Email = "dries@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "DRIES@EXAMPLE.COM",
                             NormalizedUserName = "DRIES",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDXBWDHjl8+o7XagllDvGm39JlkcpG29th9ynUXSWeaH1FIQ1mM1Pje8nhC7JoObsw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDbkVNkxwmigQhHTO0Yux6hpc4hzvs+x2qLwOh51Yc24IAQB8c8EbmgDzNc+vYqyhA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "be0ecf16-3005-43f1-85b4-eddf4e8a41bd",
+                            SecurityStamp = "f7d0ecf1-c8dd-4f7c-bd81-95ed7f3cd01d",
                             TwoFactorEnabled = false,
                             UserName = "Dries"
                         },
@@ -109,16 +112,16 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "2",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "09490ec7-2822-45cc-88bb-d62dd40de535",
+                            ConcurrencyStamp = "235f721e-b836-47b5-a7fd-8ce3726fff17",
                             Email = "vincent@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "VINCENT@EXAMPLE.COM",
                             NormalizedUserName = "VINCENT",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGcBaXqB6MGGbNhZcZSuAKJg1esvJT2v+cBK0qXS/drH6xOwPHSpDl71+vNm/a/pCg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBk0eKWBteCr93b1PmI7OlhRSFWnMsrITOn/JV23a9rfLgqf8yz0xNjs4H09/dR1yQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "e9a9dd30-737e-4d5f-8003-7f779031416e",
+                            SecurityStamp = "2386c1fc-7853-4370-8e11-31952c2e00bd",
                             TwoFactorEnabled = false,
                             UserName = "Vincent"
                         },
@@ -126,16 +129,16 @@ namespace Jeugdhuis.Migrations
                         {
                             Id = "3",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "79d97013-fccb-4f64-aa2d-feec20afdf3f",
+                            ConcurrencyStamp = "ae112103-a6b0-493f-864e-67eeabf48613",
                             Email = "simon@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "SIMON@EXAMPLE.COM",
                             NormalizedUserName = "SIMON",
-                            PasswordHash = "AQAAAAIAAYagAAAAEKFE9RbRY3ZbqUFBT9qS1QPDwRkMi63ozRbZlj2SJQLTuValTbP7Zc4fHtLYvsBUDg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEK29QsHiq4yruTox4HdmwKpmL1r2Rc6shOCZCkaBzA1Y+MKPjPCPjuYI/99XJTZ+cQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "c0c64d70-57d9-4603-8da3-63152820a508",
+                            SecurityStamp = "c6f195f5-214a-43fd-ab1c-743e18b75a4c",
                             TwoFactorEnabled = false,
                             UserName = "Simon"
                         });
@@ -191,12 +194,6 @@ namespace Jeugdhuis.Migrations
                             Id = 5,
                             Color = "#D85E5E",
                             Name = "cocktails"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Color = "#3285a8",
-                            Name = "andere"
                         });
                 });
 
