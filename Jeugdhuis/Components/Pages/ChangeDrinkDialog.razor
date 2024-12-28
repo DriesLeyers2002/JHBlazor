@@ -17,10 +17,6 @@
         <RadzenNumeric @bind-Value="drink.PriceAtParty" Min="0" Style="width: 100%;" />
     </div>
     <div class="form-group">
-        <label>Categorie:</label>
-        <RadzenDropDown @bind-Value="drink.CategoryId" Data="@categories" TextProperty="Name" ValueProperty="Id" Style="width: 100%;" />
-    </div>
-    <div class="form-group">
         <label>Alleen beschikbaar op Feest:</label>
         <RadzenCheckBox @bind-Value="drink.IsOnlyAtParty" />
     </div>
@@ -55,8 +51,6 @@
             Price = Drink.Price,
             PriceAtParty = Drink.PriceAtParty,
             IsOnlyAtParty = Drink.IsOnlyAtParty,
-            CategoryId = Drink.CategoryId,
-            Category = Drink.Category
         };
     }
 

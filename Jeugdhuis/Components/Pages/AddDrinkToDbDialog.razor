@@ -1,0 +1,74 @@
+﻿@page "/add-drink-to-db-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext _dbContext
+
+<RadzenFieldset Text="Voeg Nieuw Drankje Toe">
+    <EditForm Model="@drink" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenTextBox @bind-Value="drink.Name" Placeholder="Naam Drankje" Style="width: 100%;" />
+                <ValidationMessage For="@(() => drink.Name)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenNumeric @bind-Value="drink.Price" Min="0" Placeholder="Prijs" Style="width: 100%;" />
+                <ValidationMessage For="@(() => drink.Price)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenNumeric @bind-Value="drink.PriceAtParty" Min="0" Placeholder="Prijs op Feest" Style="width: 100%;" />
+                <ValidationMessage For="@(() => drink.PriceAtParty)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenDropDown Data="@categories"
+                                @bind-Value="drink.CategoryId"
+                                Placeholder="Selecteer Categorie"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                Style="width: 100%;" />
+                <ValidationMessage For="@(() => drink.CategoryId)" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCheckBox @bind-Value="drink.IsOnlyAtParty" />
+                <label style="margin-left: 0.5rem;">Alleen beschikbaar op Feest</label>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private Drink drink = new Drink();
+    private List<Category> categories = new List<Category>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await _dbContext.Category.ToListAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        drink.Category = categories.First(x => x.Id == drink.CategoryId);
+
+        DialogService.Close(drink);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+}

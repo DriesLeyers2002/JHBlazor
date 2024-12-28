@@ -10,13 +10,13 @@
 @inject NotificationService NotificationService
 @inject UserManager<Boardmember> UserManager
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Voorzitter,Admin")]
+@attribute [Authorize(Roles = "Voorzitter,Admin,Drankmeester")]
 
-<PageTitle>Bestuursleden</PageTitle>
+<PageTitle>Dranken</PageTitle>
 
-<h1>Bestuursleden</h1>
+<h1>Dranken</h1>
 
-<RadzenButton Text="Gebruiker toevoegen" Icon="add" />
+<RadzenButton Text="Drankje toevoegen" Click=@OpenAddDrinkDialog Icon ="add" />
 
 <RadzenDataGrid @ref="grid" Data="@drinks" TItem="Drink" ColumnWidth="200px">
     <Columns>
@@ -31,8 +31,17 @@
 
         <RadzenDataGridColumn TItem="Drink" Title="Acties" Width="100px">
             <Template Context="drink">
-                <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
-                              Click="@(args => ConfirmDelete(drink))" />
+                @if (drink.IsActive)
+                {
+                    <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
+                                  Click="@(args => ConfirmDelete(drink))" />
+                }
+                else
+                {
+                    <RadzenButton Icon="check" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
+                                  Click="@(args => ConfirmMakeActive(drink))" />
+                }
+               
                 <RadzenButton Icon="key" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
                               Click="@(args => OpenChangeDrinkDialog(drink))" />
             </Template>
@@ -80,10 +89,38 @@
             _dbContext.Update(drink);
             await _dbContext.SaveChangesAsync();
 
-            drinks.Remove(drink);
             await grid.Reload();
 
             NotificationService.Notify(NotificationSeverity.Success, "Verwijderd", $"{drink.Name} is gedeactiveerd.");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het deactiveren van {drink.Name}.");
+        }
+    }
+
+    private async Task ConfirmMakeActive(Drink drink)
+    {
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u {drink.Name} wilt actief wilt maken?", "Bevestig keuze",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await MakeDrinkActive(drink);
+        }
+    }
+
+    private async Task MakeDrinkActive(Drink drink)
+    {
+        try
+        {
+            drink.IsActive = true;
+            _dbContext.Update(drink);
+            await _dbContext.SaveChangesAsync();
+
+            await grid.Reload();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Actief", $"{drink.Name} is actief gemaakt.");
         }
         catch (Exception ex)
         {
@@ -96,14 +133,17 @@
         DialogService.Open<ChangeDrinkDialog>("Wijzig Drankje", new Dictionary<string, object>
     {
         { "Drink", drink },
-        { "OnConfirm", EventCallback.Factory.Create<Drink>(this, async changedDrink => await UpdateDrink(changedDrink)) }
+        { "OnConfirm", EventCallback.Factory.Create<Drink>(this, async changedDrink => await UpdateDrink(drink, changedDrink)) }
     });
     }
 
-    private async Task UpdateDrink(Drink changedDrink)
+    private async Task UpdateDrink(Drink drink, Drink changedDrink)
     {
         try
         {
+            changedDrink.CategoryId = drink.CategoryId;
+            changedDrink.Category = drink.Category;
+
             var trackedEntity = _dbContext.ChangeTracker.Entries<Drink>().FirstOrDefault(e => e.Entity.Id == changedDrink.Id);
 
             if (trackedEntity != null)
@@ -124,46 +164,41 @@
         }
     }
 
+    private async Task OpenAddDrinkDialog()
+    {
+        var result = await DialogService.OpenAsync<AddDrinkToDbDialog>("Drankje toevoegen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
 
+        if (result != null)
+        {
+            var newDrink = result as Drink;
 
-    // private async Task OpenAddBestuurslidDialog()
-    // {
-    //     var hasher = new PasswordHasher<Boardmember>();
+            if (newDrink != null)
+            {
+                try
+                {
+                    _dbContext.Drinks.Add(newDrink);
+                    await _dbContext.SaveChangesAsync();
 
-    //     var result = await DialogService.OpenAsync<AddBestuurslidDialog>("Bestuurslid toevoegen", null,
-    //         new DialogOptions() { Width = "500px", Height = "400px" });
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Drankje toegevoegd",
+                            Detail = $"U heeft met succes {newDrink.Name} toegevoegd."
+                        });
 
-    //     if (result != null)
-    //     {
-    //         var returnedUser = result.Item1;
-    //         var returnedRoles = result.Item2;
-
-    //         returnedUser.PasswordHash = hasher.HashPassword(null, returnedUser.PasswordHash);
-    //         returnedUser.NormalizedUserName = returnedUser.UserName.ToUpper();
-    //         returnedUser.NormalizedEmail = returnedUser.Email.ToUpper();
-
-    //         _dbContext.Boardmembers.Add(returnedUser);
-    //         await _dbContext.SaveChangesAsync();
-
-    //         var addRolesResult = await UserManager.AddToRolesAsync(returnedUser, returnedRoles);
-    //         if (!addRolesResult.Succeeded)
-    //         {
-    //             NotificationService.Notify(new NotificationMessage
-    //                 {
-    //                     Severity = NotificationSeverity.Error,
-    //                     Summary = "Roltoewijzing Mislukt",
-    //                     Detail = "Kon de rollen niet toevoegen aan de gebruiker."
-    //                 });
-    //             return;
-    //         }
-
-    //         NotificationService.Notify(new NotificationMessage
-    //             {
-    //                 Severity = NotificationSeverity.Success,
-    //                 Summary = "Bestuurslid met succes toegevoegd!",
-    //                 Detail = $"U heeft met succes {returnedUser.UserName} toegevoegd."
-    //             });
-    //     }
-    // }
-
+                    await LoadDrinksAsync();
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Fout bij toevoegen",
+                            Detail = $"Er ging iets mis: {ex.Message}"
+                        });
+                }
+            }
+        }
+    }
 }
