@@ -9,8 +9,8 @@
 
 <PageTitle>Lidkaarten</PageTitle>
 
-<h1>Leden</h1>
-<RadzenButton Text="Lidkaart toevoegen" Click=@OpenAddCardDialog Icon="add" />
+<h1>Lidkaarten</h1>
+<RadzenButton Text="Lidkaart toevoegen" Click=@OpenAddCardDialog Icon="add" Style="margin-bottom: 10px" />
 
 <RadzenDataGrid @ref="grid" Data="@nfcCards" TItem="NfcCard" ColumnWidth="200px">
     <Columns>
@@ -21,7 +21,11 @@
                 @($"{data.User.FirstName} {data.User.LastName}")
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="NfcCard" Property="Balance" Title="Balans" />
+        <RadzenDataGridColumn TItem="NfcCard" Property="Balance" Title="Balans">
+            <Template Context="data">
+                @($"{data.Balance:C2}")
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="NfcCard" Property="ExpiryDate" Title="Vervaldatum" />
         <RadzenDataGridColumn TItem="NfcCard" Property="IsActive" Title="Actief" />
         <RadzenDataGridColumn TItem="NfcCard" Title="Acties" Width="100px">
@@ -36,21 +40,23 @@
                     <RadzenButton Icon="check" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
                                   Click="@(args => ConfirmMakeActive(nfcCard))" />
                 }
-                
+
                 <RadzenButton Icon="event" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
                               Click="@(args => ConfirmCardRenewal(nfcCard))" />
+                <RadzenButton Icon="payments" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
+                              Click="@(args => OpenAddCardBalanceDialog())" />
             </Template>
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
 @code {
-    private ICollection<NfcCard> nfcCards = new List<NfcCard>(); 
+    private ICollection<NfcCard> nfcCards = new List<NfcCard>();
     private RadzenDataGrid<NfcCard> grid;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCardsAsync(); 
+        await LoadCardsAsync();
         await grid.Reload();
     }
 
@@ -155,50 +161,88 @@
         }
     }
 
-    private async Task OpenAddCardDialog()
+    private async Task OpenAddCardBalanceDialog()
     {
-        NfcCard result = await DialogService.OpenAsync<AddNfcCardDialog>("Lidkaart toevoegen", null,
+        NfcCard result = await DialogService.OpenAsync<AddBalanceDialog>("Kaart opwaarderen", null,
             new DialogOptions() { Width = "500px", Height = "400px" });
 
         if (result != null)
         {
-            var doesUserAlreadyHaveACard = await _dbContext.NfcCards.AnyAsync(x => x.User.Id == result.User.Id);
-
-            if (doesUserAlreadyHaveACard)
+            try
             {
+                _dbContext.NfcCards.Update(result);
+                await _dbContext.SaveChangesAsync();
+
                 NotificationService.Notify(new NotificationMessage
                     {
-                        Severity = NotificationSeverity.Warning,
-                        Summary = "Gebruiker heeft al een lidkaart",
-                        Detail = $"{result.User.FirstName} {result.User.LastName} heeft al een lidkaart."
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Lidkaart opgewaardeerd!",
+                        Detail = $"U heeft met succes de lidkaart met ID {result.CardId} opgewaardeerd. Nieuwe balans is: €{result.Balance}."
                     });
+
+                await grid.Reload();
             }
-            else
+            catch (Exception ex)
             {
-                try
-                {
-                    result.CardId = Guid.NewGuid();
-
-                    //VOEG DIALOOG IN OM KAART TE WRITEN MET DE HIERBOVEN GEGENEREERDE GUID
-
-                    _dbContext.NfcCards.Add(result);
-                    await _dbContext.SaveChangesAsync();
-
-                    NotificationService.Notify(new NotificationMessage
-                        {
-                            Severity = NotificationSeverity.Success,
-                            Summary = "Lidkaart toegevoegd!",
-                            Detail = $"U heeft met succes een lidkaart voor {result.User.FirstName} {result.User.LastName} geactiveerd."
-                        });
-
-                    grid.Reload();
-                }
-                catch (Exception ex)
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
-                }
+                NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
             }
-
         }
+
     }
-}
+
+    private async Task OpenAddCardDialog()
+    {
+        NfcCard result = await DialogService.OpenAsync<AddNfcCardDialog>
+    ("Lidkaart toevoegen", null,
+    new DialogOptions() { Width = "500px", Height = "400px" });
+
+    if (result != null)
+    {
+    var doesUserAlreadyHaveACard = await _dbContext.NfcCards.AnyAsync(x => x.User.Id == result.User.Id);
+
+    if (doesUserAlreadyHaveACard)
+    {
+    NotificationService.Notify(new NotificationMessage
+    {
+    Severity = NotificationSeverity.Warning,
+    Summary = "Gebruiker heeft al een lidkaart",
+    Detail = $"{result.User.FirstName} {result.User.LastName} heeft al een lidkaart."
+    });
+    }
+    else
+    {
+    try
+    {
+    if (_dbContext.NfcCards.Any(x => x.CardId == result.CardId))
+    {
+    NotificationService.Notify(new NotificationMessage
+    {
+    Severity = NotificationSeverity.Warning,
+    Summary = "Error",
+    Detail = $"Deze kaart is al toegekend aan een persoon. Kaart ID: {result.CardId}"
+    });
+    }
+    else
+    {
+    _dbContext.NfcCards.Add(result);
+    await _dbContext.SaveChangesAsync();
+
+    NotificationService.Notify(new NotificationMessage
+    {
+    Severity = NotificationSeverity.Success,
+    Summary = "Lidkaart toegevoegd!",
+    Detail = $"U heeft met succes een lidkaart voor {result.User.FirstName} {result.User.LastName} geactiveerd."
+    });
+
+    await grid.Reload();
+    }
+    }
+    catch (Exception ex)
+    {
+    NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
+    }
+    }
+
+    }
+    }
+    }
