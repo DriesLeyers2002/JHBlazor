@@ -84,7 +84,7 @@
 
         if (result != null)
         {
-            User user = await _dbContext.Users.FirstAsync(x => x.FirstName == result.FirstName && x.LastName == result.LastName);
+            User user = await _dbContext.Users.FirstOrDefaultAsync(x => x.FirstName == result.FirstName && x.LastName == result.LastName);
 
             if (user != null)
             {
