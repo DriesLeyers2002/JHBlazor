@@ -47,10 +47,9 @@
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenDropDown Data="@roles"
                                 @bind-Value="selectedRoles"
-                                AllowMultiple="true"
+                                Multiple="true"
                                 Placeholder="Selecteer Rollen"
                                 TextProperty="Name"
-                                ValueProperty="Id"
                                 Style="width: 100%;" />
             </RadzenColumn>
         </RadzenRow>
@@ -71,7 +70,7 @@
     private bool isPinVisible = false;
 
     private List<IdentityRole> roles = new List<IdentityRole>();
-    private List<string> selectedRoles = new List<string>();
+    private List<IdentityRole> selectedRoles = new List<IdentityRole>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -80,7 +79,7 @@
 
     private async Task HandleValidSubmit()
     {
-        var result = new Tuple<Boardmember, List<string>>(user, selectedRoles);
+        var result = new Tuple<Boardmember, List<string>>(user, selectedRoles.Select(x => x.Name).ToList());
         DialogService.Close(result);
     }
 
