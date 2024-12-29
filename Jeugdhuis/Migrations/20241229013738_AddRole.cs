@@ -5,7 +5,7 @@
 namespace Jeugdhuis.Migrations
 {
     /// <inheritdoc />
-    public partial class AddBalance : Migration
+    public partial class AddRole : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,56 +15,46 @@ namespace Jeugdhuis.Migrations
                 keyColumn: "Id",
                 keyValue: "1",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "71d0b81e-cf6f-4e63-8f4a-22f7f9b24f2d", "AQAAAAIAAYagAAAAEM4/zuhCjyu9hXE43+DraLdoeqAggfd4zK02wPTZqNKxtU/+PjKttgim/iCNK1PjWg==", "09c3ce57-5af0-4300-8f28-04676943eb77" });
+                values: new object[] { "02f407f8-9a5b-422d-8a66-d62589110bb8", "AQAAAAIAAYagAAAAEE0WCcH7kDoOx7PiGJFXy8ZAVDdY+moxfXQ0sSaILTMbJB29ET9ZoYPfJzqGRZ5L+Q==", "05e3918d-744e-44eb-8464-a1fd0691e25c" });
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "2",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "cc8537b6-8554-482c-9b29-48fb42b69315", "AQAAAAIAAYagAAAAEGe4ElLyyE67CnDYmfesE9iEhOcZr5LrI0nVCKr5vtdk1AwvZfqLARtjCWdk6695ng==", "40224fee-a419-4f76-8c7a-a3e39b2db0a1" });
+                values: new object[] { "6f097449-3843-4394-b95f-a8f08c4d7fdc", "AQAAAAIAAYagAAAAEA/3gTsG130zafPLjl+iZAWlxWatL59/3YWX6gNs8WhV0RKyV7HwiwvK4AAqMCNSpg==", "8a55e781-b22e-4270-ba1a-87a94025015a" });
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "3",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "8fe1e1d8-7b1c-4531-b43d-0965e0fd7fda", "AQAAAAIAAYagAAAAECIwXf0sUtjn9IimHZ7KA1bdQ7SICW/b4ubRgHqBefNV4vK5jZVkCXlyiILPmeu82A==", "cb71e7ca-db94-47c0-b0fc-418ab718353c" });
-
-            migrationBuilder.InsertData(
-                table: "Category",
-                columns: new[] { "Id", "Color", "Name" },
-                values: new object[] { 7, "#13fc03", "balans" });
+                values: new object[] { "d597771c-0d70-4c34-a904-cba2ec839932", "AQAAAAIAAYagAAAAEMv7AcL5A2Hx/v219W+m+ANwFZXSOuAQMwDXA4OUhcCo3N+YI1t2Loy2OzGHuJqijQ==", "fd46d2d0-ba11-43c7-b44f-34c9ca03d9b4" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DeleteData(
-                table: "Category",
-                keyColumn: "Id",
-                keyValue: 7);
-
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "1",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "3e9852fc-c2e9-43eb-badf-09311b9100b3", "AQAAAAIAAYagAAAAEAuGwpdyn7BHgyFle8yxBYYtHdQXQOWVtN+LyWROOf2F0F1a3sEuKV6OE1TEU75BTw==", "0cc83152-da6e-4fd6-82c9-25013a0f33cf" });
+                values: new object[] { "4d09814a-22da-42de-8cf5-ba13be8973cb", "AQAAAAIAAYagAAAAEOfsmhhTTM2trB5dyewQ/yLyE8cAhwyiXgVnQ4dY3wEfynngQo03UOKSLtYcUUIneQ==", "6c0504ce-a1dc-480b-9ac6-52ec251a03bf" });
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "2",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "450b563a-03ce-485b-9130-b601d0d35b8b", "AQAAAAIAAYagAAAAEMxSd0ZBAoul1XCkcX4NutoLXvHULnZ2sbqlZYMDx8xbCb8oL3SogN7286YDTZjrvQ==", "980bcd71-184f-44f7-87f9-dbd5c8f93cab" });
+                values: new object[] { "c84816e5-6ce3-437a-bc51-c31936bbaa8d", "AQAAAAIAAYagAAAAEGq8Z9ba77b0ZvwkIA8kOjj8AljLmmWpLN9bM0Ia6Tf2MMUySWu2h+7Osykzl9m/yw==", "47e42b0b-7d26-488b-b152-5a07384675ca" });
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "3",
                 columns: new[] { "ConcurrencyStamp", "PasswordHash", "SecurityStamp" },
-                values: new object[] { "56e028cc-47c2-48b9-80ec-1f00cc1ed1da", "AQAAAAIAAYagAAAAEN7bvyGrFj6ropIiKVMT1brdEVK2vutuGPCFje3EacwbBqd9DOw7DDlRkkWt4eOn2Q==", "9ad8fa02-9c3e-4b36-85a4-a00b0b80f750" });
+                values: new object[] { "1e80c875-0ac1-49d2-875b-f01fa163ded4", "AQAAAAIAAYagAAAAEKagRswAW7l/FvulFCpd3AGt9WKFBOBXcvvrP4O3QUugCNo0DUQzy8vKWUvoBxvuqw==", "6e746b12-cfa7-4524-8ddd-904eecf58322" });
         }
     }
 }

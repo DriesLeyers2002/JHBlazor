@@ -26,6 +26,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
         var adminRole = new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" };
         var voorzitterRole = new IdentityRole { Id = "2", Name = "Voorzitter", NormalizedName = "VOORZITTER" };
         var drankmeesterRole = new IdentityRole { Id = "3", Name = "Drankmeester", NormalizedName = "DRANKMEESTER" };
+        var bestuurderRole = new IdentityRole { Id = "4", Name = "Bestuurdslid", NormalizedName = "BESTUURSLID" };
 
         modelBuilder.Entity<Drink>(entity =>
         {
