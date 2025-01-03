@@ -11,7 +11,6 @@
         <DataAnnotationsValidator />
         <RadzenRow Gap="2rem" RowGap="2rem">
             <RadzenColumn Size="12">
-                <RadzenButton Text="Bevestig betaling" ButtonType="ButtonType.Submit" Style="width: 100%;" Disabled="@isSubmitDisabled" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -60,13 +59,9 @@
 
         try
         {
-
-            NfcCard card = null;
             detectedCardUid = cardInfo;
-            card = await _dbContext.NfcCards.Include(x => x.User).FirstOrDefaultAsync(x => x.CardId.Equals(cardInfo));
 
-            isSubmitDisabled = false;
-            statusMessage = $"Kaart gedetecteerd: {cardInfo}. Bent u zeker dat u met deze kaart wilt betalen? De kaart is van {card.User.FirstName} {card.User.LastName}. De rekening was: €{billAmount}";
+            HandleValidSubmit();
             InvokeAsync(StateHasChanged);
 
         }
@@ -87,7 +82,7 @@
 
     private async Task HandleValidSubmit()
     {
-        var card = await _dbContext.NfcCards.FirstAsync(x => x.CardId == detectedCardUid);
+        var card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
 
         NfcService.StopListening();
         DialogService.Close(card);
@@ -95,7 +90,6 @@
 
     private void CloseDialog()
     {
-        NfcService.StopListening();
         DialogService.Close(null);
     }
 }
