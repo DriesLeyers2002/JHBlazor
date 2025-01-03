@@ -23,32 +23,59 @@
     </EditForm>
 </RadzenFieldset>
 
+<style>
+    .rz-dialog-titlebar-icon {
+        display: none !important;
+    }
+</style>
+
 @code {
     private NfcCard nfcCard = new NfcCard();
     private bool isSubmitDisabled = true;
     private string statusMessage = "Leg de lidkaart op de NFC reader.";
     private string detectedCardUid = string.Empty;
 
+    private bool processing = false;
+
     [Parameter]
     public double billAmount { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        NfcService.CardDetected += OnCardDetected;
+        NfcService.CardDetected = OnCardDetected;
         NfcService.CardRemoved += OnCardRemoved;
 
         NfcService.StartListening();
     }
 
-    private async void OnCardDetected(string cardInfo)
+    public async Task OnCardDetected(string cardInfo)
     {
-        detectedCardUid = cardInfo;
+        Console.WriteLine($"Kaart gedetecteerd");
+        if (processing)
+        {
+            return;
+        }
 
-        var card = await _dbContext.NfcCards.Include(x => x.User).FirstOrDefaultAsync(x => x.CardId.Equals(cardInfo));
+        processing = true;
 
-        isSubmitDisabled = false;
-        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Bent u zeker dat u met deze kaart wilt betalen? De kaart is van {card.User.FirstName} {card.User.LastName}. De rekening was: €{billAmount}";
-        InvokeAsync(StateHasChanged);
+        try
+        {
+
+            NfcCard card = null;
+            detectedCardUid = cardInfo;
+            card = await _dbContext.NfcCards.Include(x => x.User).FirstOrDefaultAsync(x => x.CardId.Equals(cardInfo));
+
+            isSubmitDisabled = false;
+            statusMessage = $"Kaart gedetecteerd: {cardInfo}. Bent u zeker dat u met deze kaart wilt betalen? De kaart is van {card.User.FirstName} {card.User.LastName}. De rekening was: €{billAmount}";
+            InvokeAsync(StateHasChanged);
+
+        }
+        catch
+        { }
+        finally
+        {
+            processing = false;
+        }
     }
 
     private void OnCardRemoved()
@@ -61,14 +88,14 @@
     private async Task HandleValidSubmit()
     {
         var card = await _dbContext.NfcCards.FirstAsync(x => x.CardId == detectedCardUid);
-        card.Balance -= billAmount;
 
+        NfcService.StopListening();
         DialogService.Close(card);
     }
 
     private void CloseDialog()
     {
-        DialogService.Close(null);
         NfcService.StopListening();
+        DialogService.Close(null);
     }
 }

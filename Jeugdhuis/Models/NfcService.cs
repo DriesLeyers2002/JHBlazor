@@ -1,6 +1,7 @@
 ﻿using PCSC;
 using System;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Jeugdhuis.Models
@@ -11,8 +12,9 @@ namespace Jeugdhuis.Models
         private SCardReader? _reader;
         private string? _readerName;
 
-        public event Action<string>? CardDetected;
+        public Func<string, Task>? CardDetected;
         public event Action? CardRemoved;
+        public bool isListening { get; set; }
 
         public NfcService()
         {
@@ -20,8 +22,15 @@ namespace Jeugdhuis.Models
             _context.Establish(SCardScope.System);
         }
 
-        public void StartListening()
+        public async void StartListening()
         {
+            if (isListening)
+            {
+                return;
+            }
+
+            isListening = true;
+
             _readerName = _context.GetReaders().FirstOrDefault();
             if (string.IsNullOrEmpty(_readerName))
             {
@@ -30,25 +39,36 @@ namespace Jeugdhuis.Models
 
             _reader = new SCardReader(_context);
 
-            Task.Run(() =>
+            await Task.Run(async () =>
             {
-                while (true)
+                try
                 {
-                    var connection = _reader.Connect(_readerName, SCardShareMode.Shared, SCardProtocol.Any);
-                    if (connection == SCardError.Success)
+                    while (isListening)
                     {
-                        var uid = ReadCardUid();
-                        if (!string.IsNullOrEmpty(uid))
+                        if (CardDetected == null)
                         {
-                            CardDetected?.Invoke(uid);
+                            return;
                         }
-                    }
-                    else
-                    {
-                        CardRemoved?.Invoke();
-                    }
 
-                    Task.Delay(500).Wait();
+                        var connection = _reader.Connect(_readerName, SCardShareMode.Shared, SCardProtocol.Any);
+                        if (connection == SCardError.Success)
+                        {
+                            var uid = ReadCardUid();
+                            if (!string.IsNullOrEmpty(uid))
+                            {
+                                await CardDetected?.Invoke(uid);
+                            }
+                        }
+                        else
+                        {
+                            CardRemoved?.Invoke();
+                        }
+
+                        Task.Delay(500).Wait();
+                    }
+                }
+                finally
+                {
                 }
             });
         }
@@ -80,12 +100,15 @@ namespace Jeugdhuis.Models
 
             return string.Empty;
         }
-        
+
 
         public void StopListening()
         {
+            CardDetected = null;
+            CardRemoved = null;
+            isListening = false;
             _reader?.Disconnect(SCardReaderDisposition.Leave);
-            _context?.Release();
+            //_context?.Release();
         }
     }
 }

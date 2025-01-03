@@ -48,13 +48,13 @@
                                 .Any(c => c.User.Id == u.Id)) 
                                 .ToListAsync();
 
-        NfcService.CardDetected += OnCardDetected;
+        NfcService.CardDetected = OnCardDetected;
         NfcService.CardRemoved += OnCardRemoved;
 
         NfcService.StartListening();
     }
 
-    private void OnCardDetected(string cardInfo)
+    private async Task OnCardDetected(string cardInfo)
     {
         detectedCardUid = cardInfo;
         isSubmitDisabled = false;

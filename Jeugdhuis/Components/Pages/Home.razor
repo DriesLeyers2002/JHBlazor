@@ -234,6 +234,10 @@
         width: 500px;
         background-color: #fafafa;
     }
+
+    .rz-dialog-titlebar-icon {
+        display: none !important;
+    }
 </style>
 
 @code {
@@ -395,13 +399,13 @@
         {
             try
             {
-                if (result.Balance < 0)
+                if (result.Balance < bill)
                 {
                     NotificationService.Notify(new NotificationMessage
                         {
                             Severity = NotificationSeverity.Error,
                             Summary = "Betaling niet gelukt",
-                            Detail = $"{result.User.FirstName} {result.User.LastName} heeft te weinig geld op zijn kaart om deze betaling te voltooien. Zijn/haar balans is: €{result.Balance}."
+                            Detail = $"{result.User.FirstName} {result.User.LastName} heeft te weinig geld op zijn kaart om deze betaling te voltooien."
                         });
                 }
                 else if (!result.IsActive)
@@ -415,6 +419,10 @@
                 }
                 else
                 {
+                    if (result.Balance >= bill)
+                    {
+                        result.Balance -= bill;
+                    }
 
                     _dbContext.NfcCards.Update(result);
                     await _dbContext.SaveChangesAsync();
