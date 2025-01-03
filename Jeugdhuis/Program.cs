@@ -58,15 +58,6 @@ builder.Services.ConfigureApplicationCookie(opt =>
     opt.EventsType = typeof(CookieEvents);
 });
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.Listen(IPAddress.Any, 44300); // For HTTP
-    serverOptions.Listen(IPAddress.Any, 44300, listenOptions => // For HTTPS
-    {
-        listenOptions.UseHttps(); // Ensure you have SSL certificates configured
-    });
-});
-
 var app = builder.Build();
 
 app.MapControllers();

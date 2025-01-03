@@ -159,8 +159,9 @@
                 }
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Payconiq" Click="() => Pay(true)" class="pay-button" />
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Cash" Click="() => Pay(false)" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Payconiq" Click="() => Pay(PaymentType.Payconiq)" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Cash" Click="() => Pay(PaymentType.Cash)" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Lidkaart" Click="() => Pay(PaymentType.Lidkaart)" class="pay-button" />
             </RadzenStack>
         </RadzenCard>
 
@@ -248,6 +249,13 @@
 
     private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50 };
     private double paidWith = 0.0;
+
+    private enum PaymentType
+    {
+        Payconiq,
+        Cash,
+        Lidkaart
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -358,18 +366,80 @@
 
     public string paymentId { get; set; }
 
-    private async Task Pay(bool card)
+    private async Task Pay(PaymentType type)
     {
-        if (card)
+        if (type == PaymentType.Payconiq)
         {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Betaling doorgestuurd" });
             paymentId = await StartPayment();
+        }
+        else if (type == PaymentType.Lidkaart)
+        {
+            paymentId = await OpenPaymentDialog();
         }
 
         orders.Clear();
         this.CalculateBill();
         paidWith = 0.0;
+    }
 
-        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Betaling doorgestuurt" });
+    private async Task<string> OpenPaymentDialog()
+    {
+        NfcCard result = await DialogService.OpenAsync<PayWithCardDialog>(
+            "Betaling met lidkaart", 
+            new Dictionary<string, object> { { "billAmount", bill } },
+            new DialogOptions { Width = "500px", Height = "400px" } 
+        );
+
+        if (result != null)
+        {
+            try
+            {
+                if (result.Balance < 0)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Betaling niet gelukt",
+                            Detail = $"{result.User.FirstName} {result.User.LastName} heeft te weinig geld op zijn kaart om deze betaling te voltooien. Zijn/haar balans is: €{result.Balance}."
+                        });
+                }
+                else if (!result.IsActive)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Betaling niet gelukt",
+                            Detail = $"{result.User.FirstName} {result.User.LastName} zijn/haar kaart is gedeactiveerd. Activeer deze terug op de pagina 'Lidkaarten'. "
+                        });
+                }
+                else
+                {
+
+                    _dbContext.NfcCards.Update(result);
+                    await _dbContext.SaveChangesAsync();
+
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Betaling gelukt!",
+                        Detail = $"{result.User.FirstName} {result.User.LastName} heeft met succes betaald met zijn/haar lidkaart. Nieuwe balans is: €{result.Balance}."
+                    });
+
+                    return result.CardId;
+                }
+
+                return string.Empty;
+
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
+            }
+        }
+
+        return string.Empty;
+
     }
 
 

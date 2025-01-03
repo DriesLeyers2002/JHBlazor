@@ -26,6 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Components\Pages\PayWithCardDialog.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
     <Content Update="Components\Pages\Settings.razor">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
