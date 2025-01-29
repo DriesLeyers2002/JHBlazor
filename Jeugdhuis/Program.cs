@@ -18,6 +18,13 @@ ServicePointManager.ServerCertificateValidationCallback += (sender, certificate,
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient<PayconiqService>();
+
+builder.Services.AddHttpClient("DobissAPI", client =>
+{
+    client.BaseAddress = new Uri("https://api.dobiss.com/"); 
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer 02d1b855dd6ba0beed32058be007a4c68e6e08e65d916c5088eeba384b06bcea");
+});
+
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddSignalR();

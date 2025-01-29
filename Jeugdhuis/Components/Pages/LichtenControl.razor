@@ -1,0 +1,157 @@
+﻿@page "/lichten"
+@inject IHttpClientFactory HttpClientFactory
+
+<h3>Control Lights</h3>
+
+@if (lights == null)
+{
+    <p>Loading lights...</p>
+}
+else
+{
+    <ul>
+        @foreach (var light in lights)
+        {
+            <li>
+                @light.Name
+                <button @onclick="() => TurnOnLight(light.Id)">Turn On</button>
+                <button @onclick="() => TurnOffLight(light.Id)">Turn Off</button>
+            </li>
+        }
+    </ul>
+}
+
+<p>@statusMessage</p>
+
+@code {
+    private List<Light> lights;
+    private string statusMessage;
+    private string jwtToken;
+
+    // Haal het JWT-token op
+    protected override async Task OnInitializedAsync()
+    {
+        await GetJwtToken();  // Haal de JWT-token op
+        await LoadLights();
+    }
+
+    private async Task GetJwtToken()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient(); 
+            var response = await client.GetFromJsonAsync<TokenResponse>("https://localhost:44300/api/jwt/generate");
+
+            if (response != null && response.Token != null)
+            {
+                jwtToken = response.Token;
+            }
+            else
+            {
+                statusMessage = "Failed to retrieve JWT.";
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error retrieving JWT: {ex.Message}";
+        }
+    }
+
+    // Laad de lichten nadat het token is opgehaald
+    private async Task LoadLights()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, "https://jeugdhuisdecaravan.mydobiss.com/api/local/discover");
+
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+
+            Console.WriteLine("HIER KOMT DE CONTENT");
+            Console.WriteLine(await response.Content.ReadAsStringAsync());
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var lightsResponse = await response.Content.ReadFromJsonAsync<List<Light>>();
+                lights = lightsResponse ?? new List<Light>();
+            }
+            else
+            {
+                statusMessage = "Failed to fetch lights. Status code: " + response.StatusCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    // Zet het licht aan
+    private async Task TurnOnLight(string lightId)
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"https://jeugdhuisdecaravan.mydobiss.com/api/lights/{lightId}/on");
+
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                statusMessage = "Light turned on!";
+            }
+            else
+            {
+                statusMessage = "Failed to turn on the light. Status code: " + response.StatusCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    // Zet het licht uit
+    private async Task TurnOffLight(string lightId)
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"https://jeugdhuisdecaravan.mydobiss.com/api/lights/{lightId}/off");
+
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                statusMessage = "Light turned off!";
+            }
+            else
+            {
+                statusMessage = "Failed to turn off the light. Status code: " + response.StatusCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    public class Light
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public bool IsOn { get; set; }
+    }
+
+    // Reactie van de API met het JWT-token
+    public class TokenResponse
+    {
+        public string Token { get; set; }
+    }
+}
