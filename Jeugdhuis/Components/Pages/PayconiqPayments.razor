@@ -1,0 +1,48 @@
+﻿@page "/payconiq/payments"
+@using Jeugdhuis.Models.PayconiqPayments
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@rendermode InteractiveServer
+@inject PayconiqService PayconiqService
+
+<PageTitle>Payment</PageTitle>
+
+<h1>Payment</h1>
+
+<RadzenDataGrid @ref="grid" Data="@payconiqPayments" TItem="Detail" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="Detail" Property="paymentId" Title="ID" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="createdAt" Title="createdAt" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="succeededAt" Title="succeededAt" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="status" Title="Status" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="Debtor" Title="Debtor" Width="50px">
+            <Template Context="data">
+                @(data.debtor?.name)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Detail" Property="totalAmount" Title="Amount" Width="50px">
+            <Template Context="data">
+                @($"€ {FormatNumberSpecialNumber(data.amount)}")
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private RadzenDataGrid<Detail> grid;
+    private ICollection<Detail> payconiqPayments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var payments = await PayconiqService.getMostRecentPayments();
+        payconiqPayments = payments.details;
+    }
+
+    public static string FormatNumberSpecialNumber(int inputString)
+    {
+
+        string tempString;
+        tempString = $"{(((double)inputString) / 100):0.00}";
+        return tempString;
+    }
+}

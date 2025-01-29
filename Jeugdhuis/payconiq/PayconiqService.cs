@@ -1,5 +1,6 @@
 ﻿namespace Jeugdhuis
 {
+    using Jeugdhuis.Models.PayconiqPayments;
     using Microsoft.Extensions.Configuration;
     using System;
     using System.Net.Http;
@@ -74,6 +75,28 @@
                 Console.WriteLine($"Request failed: {ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<PayconiqPayments> getMostRecentPayments()
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.payconiq.com/v3/payments/search?page=0&size=100");
+
+            var authToken = _configuration["Payconiq:AuthorizationToken"];
+            request.Headers.Add("Authorization", authToken);
+
+            var content = new StringContent("{\r\n\"from\":\"2025-01-03T10:50:46.486Z\"\r\n}", null, "application/json");
+
+            request.Content = content;
+            var response = await client.SendAsync(request);
+
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            PayconiqPayments payments = JsonSerializer.Deserialize<PayconiqPayments>(responseContent);
+
+
+            return payments;
         }
     }
 }
