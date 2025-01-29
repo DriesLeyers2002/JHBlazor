@@ -9,7 +9,7 @@
     using System.Threading.Tasks;
 
     public class PayconiqService // QR code TEST: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da11a5a2324a46e890a945%2FPOS00001
-    {                            // QR code PROD: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001
+    {                            // QR code PROD: https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F652e8323c88feb02443989fc%2FPOS00001 deze werkt
                                  // test 2 idk    https://portal.payconiq.com/qrcode?c=https%3A%2F%2Fpayconiq.com%2Fl%2F1%2F64da118da2324a46e890a944%2FPOS00001
         private readonly IConfiguration _configuration;
         public PayconiqService(HttpClient httpClient, IConfiguration configuration)
