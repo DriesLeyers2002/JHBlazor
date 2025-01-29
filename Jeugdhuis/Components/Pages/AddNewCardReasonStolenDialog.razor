@@ -1,0 +1,68 @@
+﻿@page "/add-new-card-other-stolen"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext _dbContext
+@inject NfcService NfcService
+
+<RadzenFieldset Text="Ken nieuwe lidkaart toe">
+    <p>@statusMessage</p>
+    <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Opslaan" ButtonType="ButtonType.Submit" Style="width: 100%;" Disabled="@isSubmitDisabled" />
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+@code {
+    private NfcCard nfcCard = new NfcCard();
+    private bool isSubmitDisabled = true;
+    private string statusMessage = "Leg de nieuwe lidkaart op de NFC reader.";
+    private string detectedCardUid = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        NfcService.CardDetected = OnCardDetected;
+        NfcService.CardRemoved += OnCardRemoved;
+
+        NfcService.StartListening();
+    }
+
+    private async Task OnCardDetected(string cardInfo)
+    {
+        detectedCardUid = cardInfo;
+        isSubmitDisabled = false;
+        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Klik op Opslaan om de kaart toe te kennen.";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCardRemoved()
+    {
+        isSubmitDisabled = true;
+        statusMessage = "Leg de nieuwe lidkaart op de NFC reader.";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        int currentYear = DateTime.Now.Year;
+        nfcCard.ExpiryDate = new DateTime(currentYear, 12, 31, 23, 59, 59);
+        nfcCard.IsActive = true;
+
+        nfcCard.CardId = detectedCardUid;
+
+        DialogService.Close(nfcCard);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+        NfcService.StopListening();
+    }
+}
