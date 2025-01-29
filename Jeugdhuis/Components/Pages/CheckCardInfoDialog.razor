@@ -1,0 +1,103 @@
+﻿@page "/check-card-info-dialog"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@inject DialogService DialogService
+@inject AppDbContext _dbContext
+@inject NfcService NfcService
+
+<RadzenFieldset Text="Van wie is deze lidkaart?">
+    <p>@statusMessage</p>
+    <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            <RadzenColumn Size="12">
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Style="margin-top: 20px;">
+            <RadzenColumn Size="6">
+                <RadzenButton Text="Annuleren" Click="CloseDialog" ButtonType="ButtonType.Button" Style="width: 100%;" />
+            </RadzenColumn>
+        </RadzenRow>
+    </EditForm>
+</RadzenFieldset>
+
+<style>
+    .rz-dialog-titlebar-icon {
+        display: none !important;
+    }
+</style>
+
+@code {
+    private NfcCard nfcCard = new NfcCard();
+    private bool isSubmitDisabled = true;
+    private string statusMessage = "Leg de lidkaart op de NFC reader.";
+    private string detectedCardUid = string.Empty;
+
+    private bool processing = false;
+
+    [Parameter]
+    public double billAmount { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        NfcService.CardDetected = OnCardDetected;
+        NfcService.CardRemoved += OnCardRemoved;
+
+        NfcService.StartListening();
+    }
+
+    public async Task OnCardDetected(string cardInfo)
+    {
+        Console.WriteLine($"Kaart gedetecteerd");
+        if (processing)
+        {
+            return;
+        }
+
+        processing = true;
+
+        try
+        {
+            detectedCardUid = cardInfo;
+
+            HandleValidSubmit();
+            InvokeAsync(StateHasChanged);
+
+        }
+        catch
+        { }
+        finally
+        {
+            processing = false;
+        }
+    }
+
+    private void OnCardRemoved()
+    {
+        isSubmitDisabled = true;
+        statusMessage = "Leg de lidkaart op de NFC reader.";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        NfcCard card = null;
+
+        try
+        {
+            card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
+        } catch (Exception e)
+        {
+            Console.WriteLine(e);    
+        }
+
+        NfcService.StopListening();
+        DialogService.Close(card);
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(null);
+    }
+}

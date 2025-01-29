@@ -11,6 +11,7 @@
 
 <h1>Lidkaarten</h1>
 <RadzenButton Text="Lidkaart toevoegen" Click=@OpenAddCardDialog Icon="add" Style="margin-bottom: 10px" />
+<RadzenButton Text="Van wie is deze kaart?" Click=@OpenCheckCardDialog Icon="add" Style="margin-bottom: 10px" />
 
 <RadzenDataGrid @ref="grid" Data="@nfcCards" TItem="NfcCard" ColumnWidth="200px">
     <Columns>
@@ -283,5 +284,32 @@
             }
 
         }
+    }
+
+    private async Task OpenCheckCardDialog()
+    {
+        NfcCard result = await DialogService.OpenAsync<CheckCardInfoDialog>
+    ("Van wie is deze kaart?", null,
+    new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Lidkaart gevonden",
+                    Detail = $"Deze lidkaart is van {result.User.FirstName} {result.User.LastName} met ID {result.CardId}."
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Geen gebruiker gevonden",
+                    Detail = $"Deze lidkaart is nog van niemand helaas. VERPATSEN MAAR!"
+                });
+        }
+
     }
 }
