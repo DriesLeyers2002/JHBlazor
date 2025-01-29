@@ -7,15 +7,15 @@
 
 <PageTitle>Payment</PageTitle>
 
-<h1>Payment</h1>
+<h1>Meest recente betalingen</h1>
 
 <RadzenDataGrid @ref="grid" Data="@payconiqPayments" TItem="Detail" ColumnWidth="200px">
     <Columns>
         <RadzenDataGridColumn TItem="Detail" Property="paymentId" Title="ID" Width="50px" />
-        <RadzenDataGridColumn TItem="Detail" Property="createdAt" Title="createdAt" Width="50px" />
-        <RadzenDataGridColumn TItem="Detail" Property="succeededAt" Title="succeededAt" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="createdAt" Title="gemaakt op" Width="50px" />
+        <RadzenDataGridColumn TItem="Detail" Property="succeededAt" Title="geslaagd op" Width="50px" />
         <RadzenDataGridColumn TItem="Detail" Property="status" Title="Status" Width="50px" />
-        <RadzenDataGridColumn TItem="Detail" Property="Debtor" Title="Debtor" Width="50px">
+        <RadzenDataGridColumn TItem="Detail" Property="Debtor" Title="Debiteur" Width="50px">
             <Template Context="data">
                 @(data.debtor?.name)
             </Template>
