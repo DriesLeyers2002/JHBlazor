@@ -1,8 +1,11 @@
 ﻿@page "/lichten"
 @inject IHttpClientFactory HttpClientFactory
+@using Microsoft.IdentityModel.Tokens
 @using Newtonsoft.Json;
 @using Radzen
 @using Radzen.Blazor
+@using System.IdentityModel.Tokens.Jwt
+@using System.Text
 @rendermode InteractiveServer
 
 <h3>Lichten</h3>
@@ -17,56 +20,90 @@ else if (lights.Count == 0)
 }
 else
 {
-    <ul>
+    <RadzenRow class="rz-p-0" Gap="10px">
+
+        @foreach (var scenario in scenarios)
+        {
+            <RadzenButton ButtonStyle="ButtonStyle.Base"
+                          Click="@(() =>  doAction(scenario.Id, scenario.Channel))"
+                          class="grid-button"
+                          Style="background-color: grey">
+                @scenario.Name
+            </RadzenButton>
+        }
+
         @foreach (var light in lights)
         {
-            <li>
-                @light.Name
-                <RadzenButton Icon="delete" Style="margin-right: 5px" Disabled="@light.IsOn" Text="Zet uit" ButtonStyle="ButtonStyle.Success"
-                              Click="@(() =>  TurnOffLight(light.Id, light.Channel))" />
 
-                <RadzenButton Icon="delete" Style="margin-right: 5px" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Success"
-                              Click="@(() =>  TurnOnLight(light.Id, light.Channel))" />
-
-            </li>
+            <RadzenColumn Size="2" Style="max-width: 150px !important">
+                @if (light.IsOff)
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                  Click="@(() =>  TurnOnLight(light.Id, light.Channel))"
+                                  class="grid-button"
+                                  Style="background-color: grey">
+                        @light.Name
+                    </RadzenButton>
+                }
+                else
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                  Click="@(() =>  TurnOffLight(light.Id, light.Channel))"
+                                  class="grid-button"
+                                  Style="background-color: yellow">
+                        @light.Name
+                    </RadzenButton>
+                }
+            </RadzenColumn>
         }
-    </ul>
+    </RadzenRow>
+
 }
 
 <p>@statusMessage</p>
 
+<style>
+
+    .grid-button {
+        width: 150px;
+        height: 100px;
+    }
+
+</style>
+
 @code {
     private List<Light> lights;
+    private List<Light> scenarios;
     private string statusMessage;
     private string jwtToken;
+    private const string SecretKey = "02d1b855dd6ba0beed32058be007a4c68e6e08e65d916c5088eeba384b06bcea";
 
     protected override async Task OnInitializedAsync()
     {
         await GetJwtToken();
         await LoadLights();
+        SplitList();
         await UpdateLightStatuses();
     }
 
     private async Task GetJwtToken()
     {
-        try
-        {
-            var client = HttpClientFactory.CreateClient();
-            var response = await client.GetFromJsonAsync<TokenResponse>("https://localhost:44300/api/jwt/generate");
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(SecretKey);
 
-            if (response != null && response.Token != null)
+        // Payload voor de JWT
+        var tokenDescriptor = new SecurityTokenDescriptor
             {
-                jwtToken = response.Token;
-            }
-            else
-            {
-                statusMessage = "Failed to retrieve JWT.";
-            }
-        }
-        catch (Exception ex)
-        {
-            statusMessage = $"Error retrieving JWT: {ex.Message}";
-        }
+                Subject = new System.Security.Claims.ClaimsIdentity(new[]
+                        {
+                    new System.Security.Claims.Claim("name", "jeugdhuisdecaravan"),
+                }),
+                Expires = DateTime.UtcNow.AddHours(24), // Vervalt over 24 uur
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        jwtToken = tokenHandler.WriteToken(token);
     }
 
     private async Task LoadLights()
@@ -114,7 +151,7 @@ else
                                                 Id = subject.Address,
                                                 Channel = subject.Channel,
                                                 Name = subject.Name,
-                                                IsOn = false
+                                                IsOff = false
                                             });
                                     }
                                 }
@@ -141,6 +178,12 @@ else
         {
             statusMessage = $"Fout: {ex.Message}";
         }
+    }
+
+    private void SplitList()
+    {
+        scenarios = lights.TakeLast(4).ToList();
+        lights.RemoveRange(lights.Count - 4, 4);
     }
 
     private async Task UpdateLightStatuses()
@@ -172,7 +215,7 @@ else
                     var statusResponse = JsonConvert.DeserializeObject<ApiStatusResponse>(content);
                     if (statusResponse?.Status != null)
                     {
-                        light.IsOn = statusResponse.Status == "0";
+                        light.IsOff = statusResponse.Status == "0";
                     }
                 }
             }
@@ -206,10 +249,10 @@ else
             if (response.IsSuccessStatusCode)
             {
                 statusMessage = "Light turned on!";
-                var light = lights.SingleOrDefault(l => l.Id == lightId);
+                var light = lights.FirstOrDefault(l => l.Id == lightId && l.Channel == lightChannel);
                 if (light != null)
                 {
-                    light.IsOn = true;
+                    light.IsOff = false;
                 }
             }
             else
@@ -221,6 +264,13 @@ else
         {
             statusMessage = $"Error: {ex.Message}";
         }
+    }
+
+    public async Task doAction(string lightId, string lightChannel)
+    {
+        await TurnOnLight(lightId, lightChannel);
+        await UpdateLightStatuses();
+        StateHasChanged();
     }
 
     private async Task TurnOffLight(string lightId, string lightChannel)
@@ -248,10 +298,10 @@ else
             if (response.IsSuccessStatusCode)
             {
                 statusMessage = "Light turned off!";
-                var light = lights.FirstOrDefault(l => l.Id == lightId);
+                var light = lights.FirstOrDefault(l => l.Id == lightId && l.Channel == lightChannel);
                 if (light != null)
                 {
-                    light.IsOn = false;
+                    light.IsOff = true;
                 }
             }
             else
@@ -270,7 +320,7 @@ else
         public string Id { get; set; }
         public string Name { get; set; }
         public string Channel { get; set; }
-        public bool IsOn { get; set; } 
+        public bool IsOff { get; set; }
     }
 
     public class ApiStatusResponse
