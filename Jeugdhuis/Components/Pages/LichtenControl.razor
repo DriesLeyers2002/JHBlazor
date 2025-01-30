@@ -2,7 +2,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @using Newtonsoft.Json;
 
-<h3>Control Lights</h3>
+<h3>Lichten</h3>
 
 @if (lights == null)
 {
@@ -19,8 +19,8 @@ else
         {
             <li>
                 @light.Name
-                <button @onclick="() => TurnOnLight(light.Id)" disabled="@light.IsOn">Turn On</button>
-                <button @onclick="() => TurnOffLight(light.Id)" disabled="@( !light.IsOn)">Turn Off</button>
+                <button @onclick="() => TurnOffLight(light.Id, light.Channel)" disabled="@light.IsOn">Turn Off</button>
+                <button @onclick="() => TurnOnLight(light.Id, light.Channel)" disabled="@( !light.IsOn)">Turn On</button>
             </li>
         }
     </ul>
@@ -87,7 +87,7 @@ else
                     "NXT 0-10V 1", "NXT 0-10V 2", "NXT Input 1", "NXT Input 2", "NXT Input 3",
                     "NXT Relay 10", "NXT Relay 11", "NXT Relay 12", "NXT Relay 9",
                     "Output 1.10", "Output 1.11", "Output 1.12", "Output 1.4", "Output 1.5",
-                    "Output 1.6", "Output 1.7", "Output 1.8", "Output 1.9"
+                    "Output 1.6", "Output 1.7", "Output 1.8", "Output 1.9", "Sun is UP"
                 };
 
                     foreach (var group in apiResponse.Groups)
@@ -176,19 +176,21 @@ else
         }
     }
 
-    private async Task TurnOnLight(string lightId)
+    private async Task TurnOnLight(string lightId, string lightChannel)
     {
+
+        Console.WriteLine("test");
         try
         {
             var client = HttpClientFactory.CreateClient();
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
 
-            // Stel het JSON-Body in voor het aanzetten van het licht
+           
             var actionData = new
             {
-                address = lightId,  // Het adres van het licht
-                channel = 0,        // Het uitgang nummer van de module
-                action = 1          // 1 = aan
+                address = lightId,  
+                channel = lightChannel,       
+                action = 1      
             };
 
             var json = JsonConvert.SerializeObject(actionData);
@@ -203,7 +205,7 @@ else
                 var light = lights.FirstOrDefault(l => l.Id == lightId);
                 if (light != null)
                 {
-                    light.IsOn = true;  // Zet de status van het licht aan
+                    light.IsOn = true;
                 }
             }
             else
@@ -217,19 +219,18 @@ else
         }
     }
 
-    private async Task TurnOffLight(string lightId)
+    private async Task TurnOffLight(string lightId, string lightChannel)
     {
         try
         {
             var client = HttpClientFactory.CreateClient();
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
 
-            // Stel het JSON-Body in voor het uitzetten van het licht
             var actionData = new
             {
-                address = lightId,  // Het adres van het licht
-                channel = 0,        // Het uitgang nummer van de module
-                action = 0          // 0 = uit
+                address = lightId, 
+                channel = lightChannel,     
+                action = 0         
             };
 
             var json = JsonConvert.SerializeObject(actionData);
@@ -244,7 +245,7 @@ else
                 var light = lights.FirstOrDefault(l => l.Id == lightId);
                 if (light != null)
                 {
-                    light.IsOn = false;  // Zet de status van het licht uit
+                    light.IsOn = false; 
                 }
             }
             else
