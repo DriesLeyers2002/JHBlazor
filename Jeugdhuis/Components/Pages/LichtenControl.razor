@@ -9,7 +9,7 @@
 @using System.Text
 @rendermode InteractiveServer
 
-<h3>Lichten</h3>
+<h3>Scenarios</h3>
 
 @if (lights == null)
 {
@@ -21,7 +21,7 @@ else if (lights.Count == 0)
 }
 else
 {
-    <RadzenRow class="rz-p-0" Gap="10px">
+    <RadzenRow class="rz-p-0" style="margin-bottom: 20px" Gap="10px">
 
         @foreach (var scenario in scenarios)
         {
@@ -32,6 +32,14 @@ else
                 @scenario.Name
             </RadzenButton>
         }
+    </RadzenRow >
+    <RadzenRow class="rz-p-0" Gap="10px">
+
+        <br />
+        <h3>Lichten</h3>
+        <br />
+    </RadzenRow>
+    <RadzenRow class="rz-p-0" Gap="10px">
 
         @foreach (var light in lights)
         {
@@ -94,7 +102,7 @@ else
         var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new System.Security.Claims.ClaimsIdentity(new[]
-                        {
+                            {
                     new System.Security.Claims.Claim("name", "jeugdhuisdecaravan"),
                 }),
                 Expires = DateTime.UtcNow.AddHours(24), // Vervalt over 24 uur

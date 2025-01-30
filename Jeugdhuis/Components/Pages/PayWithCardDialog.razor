@@ -82,7 +82,18 @@
 
     private async Task HandleValidSubmit()
     {
-        var card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
+        NfcCard card = null;
+
+        try
+        {
+            card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
+        }
+        catch
+        {
+            card = new NfcCard();
+            card.CardId = detectedCardUid;
+            Console.WriteLine("Deze kaart is kan niet gevonden worden in ons systeem.");
+        }
 
         NfcService.StopListening();
         DialogService.Close(card);

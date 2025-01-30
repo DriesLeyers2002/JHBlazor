@@ -423,7 +423,7 @@
             new DialogOptions { Width = "500px", Height = "400px" } 
         );
 
-        if (result != null)
+        if (result.User != null)
         {
             try
             {
@@ -472,6 +472,9 @@
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
             }
+        }else if(result != null)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Deze kaart is niet gevonden in ons systeem. VERKOOP DEZE LIEVER!");
         }
 
         return string.Empty;
