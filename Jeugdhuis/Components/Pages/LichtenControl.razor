@@ -1,11 +1,16 @@
 ﻿@page "/lichten"
 @inject IHttpClientFactory HttpClientFactory
+@using Newtonsoft.Json;
 
 <h3>Control Lights</h3>
 
 @if (lights == null)
 {
     <p>Loading lights...</p>
+}
+else if (lights.Count == 0)
+{
+    <p>No lights found.</p>
 }
 else
 {
@@ -14,8 +19,8 @@ else
         {
             <li>
                 @light.Name
-                <button @onclick="() => TurnOnLight(light.Id)">Turn On</button>
-                <button @onclick="() => TurnOffLight(light.Id)">Turn Off</button>
+                <button @onclick="() => TurnOnLight(light.Id)" disabled="@light.IsOn">Turn On</button>
+                <button @onclick="() => TurnOffLight(light.Id)" disabled="@( !light.IsOn)">Turn Off</button>
             </li>
         }
     </ul>
@@ -28,18 +33,18 @@ else
     private string statusMessage;
     private string jwtToken;
 
-    // Haal het JWT-token op
     protected override async Task OnInitializedAsync()
     {
-        await GetJwtToken();  // Haal de JWT-token op
+        await GetJwtToken();  
         await LoadLights();
+        await UpdateLightStatuses();  
     }
 
     private async Task GetJwtToken()
     {
         try
         {
-            var client = HttpClientFactory.CreateClient(); 
+            var client = HttpClientFactory.CreateClient();
             var response = await client.GetFromJsonAsync<TokenResponse>("https://localhost:44300/api/jwt/generate");
 
             if (response != null && response.Token != null)
@@ -57,7 +62,6 @@ else
         }
     }
 
-    // Laad de lichten nadat het token is opgehaald
     private async Task LoadLights()
     {
         try
@@ -68,34 +72,127 @@ else
             requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
 
             var response = await client.SendAsync(requestMessage);
+            var content = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine("HIER KOMT DE CONTENT");
-            Console.WriteLine(await response.Content.ReadAsStringAsync());
-            
             if (response.IsSuccessStatusCode)
             {
-                var lightsResponse = await response.Content.ReadFromJsonAsync<List<Light>>();
-                lights = lightsResponse ?? new List<Light>();
+                ApiResponse apiResponse = JsonConvert.DeserializeObject<ApiResponse>(content);
+
+                if (apiResponse?.Groups != null && apiResponse.Groups.Count > 0)
+                {
+                    lights = new List<Light>();
+
+                    var excludedDevices = new List<string>
+                {
+                    "NXT 0-10V 1", "NXT 0-10V 2", "NXT Input 1", "NXT Input 2", "NXT Input 3",
+                    "NXT Relay 10", "NXT Relay 11", "NXT Relay 12", "NXT Relay 9",
+                    "Output 1.10", "Output 1.11", "Output 1.12", "Output 1.4", "Output 1.5",
+                    "Output 1.6", "Output 1.7", "Output 1.8", "Output 1.9"
+                };
+
+                    foreach (var group in apiResponse.Groups)
+                    {
+                        if (group?.Subjects != null)
+                        {
+                            foreach (var subject in group.Subjects)
+                            {
+                                if (!excludedDevices.Contains(subject.Name))
+                                {
+                                    Console.WriteLine($"Licht toegevoegd: {subject.Name}");
+
+                                    if (!lights.Any(l => l.Name == subject.Name))
+                                    {
+                                        lights.Add(new Light
+                                            {
+                                                Id = subject.Address,
+                                                Channel = subject.Channel,
+                                                Name = subject.Name,
+                                                IsOn = false
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (lights.Count == 0)
+                    {
+                        statusMessage = "Geen lichten gevonden in de groepen.";
+                    }
+                }
+                else
+                {
+                    statusMessage = "Geen groepen gevonden in de API-response.";
+                }
             }
             else
             {
-                statusMessage = "Failed to fetch lights. Status code: " + response.StatusCode;
+                statusMessage = $"Fout bij het ophalen van lichten. Statuscode: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            statusMessage = $"Error: {ex.Message}";
+            statusMessage = $"Fout: {ex.Message}";
         }
     }
 
-    // Zet het licht aan
+    private async Task UpdateLightStatuses()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+
+            foreach (var light in lights)
+            {
+                var requestMessage = new HttpRequestMessage(HttpMethod.Get, "https://jeugdhuisdecaravan.mydobiss.com/api/local/status");
+
+                requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+                var actionData = new
+                {
+                    address = light.Id, 
+                    channel = light.Channel         
+                };
+
+                var json = JsonConvert.SerializeObject(actionData);
+                requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await client.SendAsync(requestMessage);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var statusResponse = JsonConvert.DeserializeObject<ApiStatusResponse>(content);
+                    if (statusResponse?.Status != null)
+                    {
+                        light.IsOn = statusResponse.Status == "0";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error checking light status: {ex.Message}";
+        }
+    }
+
     private async Task TurnOnLight(string lightId)
     {
         try
         {
             var client = HttpClientFactory.CreateClient();
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"https://jeugdhuisdecaravan.mydobiss.com/api/lights/{lightId}/on");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
 
+            // Stel het JSON-Body in voor het aanzetten van het licht
+            var actionData = new
+            {
+                address = lightId,  // Het adres van het licht
+                channel = 0,        // Het uitgang nummer van de module
+                action = 1          // 1 = aan
+            };
+
+            var json = JsonConvert.SerializeObject(actionData);
+            requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
             requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
 
             var response = await client.SendAsync(requestMessage);
@@ -103,6 +200,11 @@ else
             if (response.IsSuccessStatusCode)
             {
                 statusMessage = "Light turned on!";
+                var light = lights.FirstOrDefault(l => l.Id == lightId);
+                if (light != null)
+                {
+                    light.IsOn = true;  // Zet de status van het licht aan
+                }
             }
             else
             {
@@ -115,14 +217,23 @@ else
         }
     }
 
-    // Zet het licht uit
     private async Task TurnOffLight(string lightId)
     {
         try
         {
             var client = HttpClientFactory.CreateClient();
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"https://jeugdhuisdecaravan.mydobiss.com/api/lights/{lightId}/off");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
 
+            // Stel het JSON-Body in voor het uitzetten van het licht
+            var actionData = new
+            {
+                address = lightId,  // Het adres van het licht
+                channel = 0,        // Het uitgang nummer van de module
+                action = 0          // 0 = uit
+            };
+
+            var json = JsonConvert.SerializeObject(actionData);
+            requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
             requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
 
             var response = await client.SendAsync(requestMessage);
@@ -130,6 +241,11 @@ else
             if (response.IsSuccessStatusCode)
             {
                 statusMessage = "Light turned off!";
+                var light = lights.FirstOrDefault(l => l.Id == lightId);
+                if (light != null)
+                {
+                    light.IsOn = false;  // Zet de status van het licht uit
+                }
             }
             else
             {
@@ -142,11 +258,44 @@ else
         }
     }
 
+    // Klasses voor de lichten en de response
     public class Light
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public bool IsOn { get; set; }
+        public string Channel { get; set; }
+        public bool IsOn { get; set; }  // Geeft aan of het licht aan of uit is
+    }
+
+    // Reactie van de API met de status
+    public class ApiStatusResponse
+    {
+        public string Status { get; set; } // "on" of "off"
+    }
+
+    public class ApiResponse
+    {
+        public List<Group> Groups { get; set; }
+    }
+
+    public class Group
+    {
+        public GroupInfo GroupInfo { get; set; }
+        public List<Subject> Subjects { get; set; }
+    }
+
+    public class GroupInfo
+    {
+        public string Name { get; set; }
+        public string Id { get; set; }
+    }
+
+    public class Subject
+    {
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public string Channel { get; set; }
+        public string Type { get; set; }
     }
 
     // Reactie van de API met het JWT-token
