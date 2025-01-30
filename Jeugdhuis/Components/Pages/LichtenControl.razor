@@ -3,6 +3,7 @@
 @using Newtonsoft.Json;
 @using Radzen
 @using Radzen.Blazor
+@rendermode InteractiveServer
 
 <h3>Lichten</h3>
 
@@ -21,16 +22,11 @@ else
         {
             <li>
                 @light.Name
-                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@light.IsOn" Text="Zet uit" ButtonStyle="ButtonStyle.Success"
-                              Click="() =>  TurnOffLight(light.Id, light.Channel)" />
-                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Danger"
-                              @onclick="Test" />
-                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Danger"
-                              Click="Test" />
+                <RadzenButton Icon="delete" Style="margin-right: 5px" Disabled="@light.IsOn" Text="Zet uit" ButtonStyle="ButtonStyle.Success"
+                              Click="@(() =>  TurnOffLight(light.Id, light.Channel))" />
 
-                <RadzenButton Text="Aan"
-                              ButtonStyle="ButtonStyle.Base"
-                              Click="Test" />
+                <RadzenButton Icon="delete" Style="margin-right: 5px" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Success"
+                              Click="@(() =>  TurnOnLight(light.Id, light.Channel))" />
 
             </li>
         }
@@ -187,16 +183,8 @@ else
         }
     }
 
-
-    public void Test()
-    {
-        Console.WriteLine("test");
-    }
-
     public async Task TurnOnLight(string lightId, string lightChannel)
     {
-
-        Console.WriteLine("test");
         try
         {
             var client = HttpClientFactory.CreateClient();
@@ -218,7 +206,7 @@ else
             if (response.IsSuccessStatusCode)
             {
                 statusMessage = "Light turned on!";
-                var light = lights.FirstOrDefault(l => l.Id == lightId);
+                var light = lights.SingleOrDefault(l => l.Id == lightId);
                 if (light != null)
                 {
                     light.IsOn = true;
@@ -277,19 +265,17 @@ else
         }
     }
 
-    // Klasses voor de lichten en de response
     public class Light
     {
         public string Id { get; set; }
         public string Name { get; set; }
         public string Channel { get; set; }
-        public bool IsOn { get; set; }  // Geeft aan of het licht aan of uit is
+        public bool IsOn { get; set; } 
     }
 
-    // Reactie van de API met de status
     public class ApiStatusResponse
     {
-        public string Status { get; set; } // "on" of "off"
+        public string Status { get; set; }
     }
 
     public class ApiResponse
@@ -317,7 +303,6 @@ else
         public string Type { get; set; }
     }
 
-    // Reactie van de API met het JWT-token
     public class TokenResponse
     {
         public string Token { get; set; }
