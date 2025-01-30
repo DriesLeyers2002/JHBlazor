@@ -160,9 +160,9 @@
                 }
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly" Gap="4px">
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Payconiq" Click="() => Pay(PaymentType.Payconiq)" class="pay-button" />
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Cash" Click="() => Pay(PaymentType.Cash)" class="pay-button" />
-                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Lidkaart" Click="() => Pay(PaymentType.Lidkaart)" class="pay-button" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="" Click="() => Pay(PaymentType.Payconiq)" class="pay-button Payconiq" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="Cash" Click="() => Pay(PaymentType.Cash)" class="pay-button Cash" />
+                <RadzenButton ButtonStyle="ButtonStyle.Base" Text="" Click="() => Pay(PaymentType.Lidkaart)" class="pay-button Lidkaart" />
             </RadzenStack>
         </RadzenCard>
 
@@ -170,6 +170,34 @@
 </div>
 
 <style>
+
+    .Payconiq {
+        background: url("payconiq.png");
+        background-position: center;
+        background-size: cover
+    }
+
+    .Cash {
+        background-color: palegreen !important;
+    }
+
+    .Lidkaart {
+        background: url("caravanCard.png");
+        background-position: center;
+        background-size: cover
+    }
+
+    .Payconiq:hover {
+        background: url("payconiq.png") !important;
+        background-position: center !important;
+        background-size: cover !important;
+    }
+
+    .Lidkaart:hover {
+        background: url("caravanCard.png") !important;
+        background-position: center !important;
+        background-size: cover !important;
+    }
 
     .grid-button {
         width: 150px;
@@ -393,7 +421,7 @@
             new DialogOptions { Width = "500px", Height = "400px" } 
         );
 
-        if (result != null)
+        if (result.User != null)
         {
             try
             {
@@ -444,6 +472,9 @@
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
             }
+        }else if(result != null)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Deze kaart is niet gevonden in ons systeem. VERKOOP DEZE LIEVER!");
         }
 
         return string.Empty;

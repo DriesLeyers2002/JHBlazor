@@ -8,7 +8,6 @@
 @inject UserManager<Boardmember> UserManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
-@inject UserManager<Boardmember> UserManager
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Voorzitter,Admin")]
 
@@ -23,6 +22,7 @@
         <RadzenDataGridColumn TItem="Boardmember" Property="Id" Title="ID" Width="50px" />
         <RadzenDataGridColumn TItem="Boardmember" Property="UserName" Title="Voornaam" />
         <RadzenDataGridColumn TItem="Boardmember" Property="DisplayRole" Title="Functie" />
+        <RadzenDataGridColumn TItem="Boardmember" Property="PhoneNumber" Title="GSM" />
         <RadzenDataGridColumn TItem="Boardmember" Title="Pincode">
             <Template Context="boardmember">
                 ****
@@ -31,8 +31,16 @@
 
         <RadzenDataGridColumn TItem="Boardmember" Title="Acties" Width="100px">
             <Template Context="boardmember">
-                <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
-                              Click="@(args => ConfirmDelete(boardmember))" />
+                @if (boardmember.IsActive)
+                {
+                    <RadzenButton Icon="delete" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
+                                  Click="@(args => ConfirmDelete(boardmember))" />
+                }
+                else
+                {
+                    <RadzenButton Icon="check" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
+                                  Click="@(args => ConfirmActive(boardmember))" />
+                }
                 <RadzenButton Icon="key" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
                               Click="@(args => OpenChangePinCodeDialog(boardmember))" />
             </Template>
@@ -75,6 +83,35 @@
         if (confirm == true)
         {
             await DeleteBoardmember(boardmember);
+        }
+    }
+
+    private async Task ConfirmActive(Boardmember boardmember)
+    {
+        bool? confirm = await DialogService.Confirm($"Bent u zeker dat u {boardmember.UserName} terug actief wilt maken?", "Bevestig activering",
+                                                     new ConfirmOptions() { OkButtonText = "Ja", CancelButtonText = "Nee" });
+
+        if (confirm == true)
+        {
+            await ActivateBoardmember(boardmember);
+        }
+    }
+
+    private async Task ActivateBoardmember(Boardmember boardmember)
+    {
+        try
+        {
+            boardmember.IsActive = true;
+            _dbContext.Update(boardmember);
+            await _dbContext.SaveChangesAsync();
+
+            await grid.Reload();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Terug actief", $"{boardmember.UserName} is terug actief.");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij het opnieuw activeren van {boardmember.UserName}.");
         }
     }
 
@@ -137,6 +174,7 @@
             returnedUser.PasswordHash = hasher.HashPassword(null, returnedUser.PasswordHash);
             returnedUser.NormalizedUserName = returnedUser.UserName.ToUpper();
             returnedUser.NormalizedEmail = returnedUser.Email.ToUpper();
+            returnedUser.IsActive = true;
 
             _dbContext.Boardmembers.Add(returnedUser);
             await _dbContext.SaveChangesAsync();

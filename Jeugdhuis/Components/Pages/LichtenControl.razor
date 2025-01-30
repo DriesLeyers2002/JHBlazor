@@ -1,0 +1,324 @@
+﻿@page "/lichten"
+@inject IHttpClientFactory HttpClientFactory
+@using Jeugdhuis.Models
+@using Microsoft.IdentityModel.Tokens
+@using Newtonsoft.Json;
+@using Radzen
+@using Radzen.Blazor
+@using System.IdentityModel.Tokens.Jwt
+@using System.Text
+@rendermode InteractiveServer
+
+<h3>Scenarios</h3>
+
+@if (lights == null)
+{
+    <p>Loading lights...</p>
+}
+else if (lights.Count == 0)
+{
+    <p>No lights found.</p>
+}
+else
+{
+    <RadzenRow class="rz-p-0" style="margin-bottom: 20px" Gap="10px">
+
+        @foreach (var scenario in scenarios)
+        {
+            <RadzenButton ButtonStyle="ButtonStyle.Base"
+                          Click="@(() =>  doAction(scenario.Id, scenario.Channel))"
+                          class="grid-button"
+                          Style="background-color: grey">
+                @scenario.Name
+            </RadzenButton>
+        }
+    </RadzenRow >
+    <RadzenRow class="rz-p-0" Gap="10px">
+
+        <br />
+        <h3>Lichten</h3>
+        <br />
+    </RadzenRow>
+    <RadzenRow class="rz-p-0" Gap="10px">
+
+        @foreach (var light in lights)
+        {
+
+            <RadzenColumn Size="2" Style="max-width: 150px !important">
+                @if (light.IsOff)
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                  Click="@(() =>  TurnOnLight(light.Id, light.Channel))"
+                                  class="grid-button"
+                                  Style="background-color: grey">
+                        @light.Name
+                    </RadzenButton>
+                }
+                else
+                {
+                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                  Click="@(() =>  TurnOffLight(light.Id, light.Channel))"
+                                  class="grid-button"
+                                  Style="background-color: yellow">
+                        @light.Name
+                    </RadzenButton>
+                }
+            </RadzenColumn>
+        }
+    </RadzenRow>
+
+}
+
+<style>
+
+    .grid-button {
+        width: 150px;
+        height: 100px;
+    }
+
+</style>
+
+@code {
+    private List<Light> lights;
+    private List<Light> scenarios;
+    private string statusMessage;
+    private string jwtToken;
+    private const string SecretKey = "02d1b855dd6ba0beed32058be007a4c68e6e08e65d916c5088eeba384b06bcea";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetJwtToken();
+        await LoadLights();
+        SplitList();
+        await UpdateLightStatuses();
+    }
+
+    private async Task GetJwtToken()
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(SecretKey);
+
+        // Payload voor de JWT
+        var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new System.Security.Claims.ClaimsIdentity(new[]
+                            {
+                    new System.Security.Claims.Claim("name", "jeugdhuisdecaravan"),
+                }),
+                Expires = DateTime.UtcNow.AddHours(24), // Vervalt over 24 uur
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        jwtToken = tokenHandler.WriteToken(token);
+    }
+
+    private async Task LoadLights()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, "https://jeugdhuisdecaravan.mydobiss.com/api/local/discover");
+
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                ApiResponse apiResponse = JsonConvert.DeserializeObject<ApiResponse>(content);
+
+                if (apiResponse?.Groups != null && apiResponse.Groups.Count > 0)
+                {
+                    lights = new List<Light>();
+
+                    var excludedDevices = new List<string>
+                {
+                    "NXT 0-10V 1", "NXT 0-10V 2", "NXT Input 1", "NXT Input 2", "NXT Input 3",
+                    "NXT Relay 10", "NXT Relay 11", "NXT Relay 12", "NXT Relay 9",
+                    "Output 1.10", "Output 1.11", "Output 1.12", "Output 1.4", "Output 1.5",
+                    "Output 1.6", "Output 1.7", "Output 1.8", "Output 1.9", "Sun is UP"
+                };
+
+                    foreach (var group in apiResponse.Groups)
+                    {
+                        if (group?.Subjects != null)
+                        {
+                            foreach (var subject in group.Subjects)
+                            {
+                                if (!excludedDevices.Contains(subject.Name))
+                                {
+                                    Console.WriteLine($"Licht toegevoegd: {subject.Name}");
+
+                                    if (!lights.Any(l => l.Name == subject.Name))
+                                    {
+                                        lights.Add(new Light
+                                            {
+                                                Id = subject.Address,
+                                                Channel = subject.Channel,
+                                                Name = subject.Name,
+                                                IsOff = false
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (lights.Count == 0)
+                    {
+                        statusMessage = "Geen lichten gevonden in de groepen.";
+                    }
+                }
+                else
+                {
+                    statusMessage = "Geen groepen gevonden in de API-response.";
+                }
+            }
+            else
+            {
+                statusMessage = $"Fout bij het ophalen van lichten. Statuscode: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Fout: {ex.Message}";
+        }
+    }
+
+    private void SplitList()
+    {
+        scenarios = lights.TakeLast(4).ToList();
+        lights.RemoveRange(lights.Count - 4, 4);
+    }
+
+    private async Task UpdateLightStatuses()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+
+            foreach (var light in lights)
+            {
+                var requestMessage = new HttpRequestMessage(HttpMethod.Get, "https://jeugdhuisdecaravan.mydobiss.com/api/local/status");
+
+                requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+                var actionData = new
+                {
+                    address = light.Id,
+                    channel = light.Channel
+                };
+
+                var json = JsonConvert.SerializeObject(actionData);
+                requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await client.SendAsync(requestMessage);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var statusResponse = JsonConvert.DeserializeObject<ApiStatusResponse>(content);
+                    if (statusResponse?.Status != null)
+                    {
+                        light.IsOff = statusResponse.Status == "0";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error checking light status: {ex.Message}";
+        }
+    }
+
+    public async Task TurnOnLight(string lightId, string lightChannel)
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
+
+            var actionData = new
+            {
+                address = lightId,
+                channel = lightChannel,
+                action = 1
+            };
+
+            var json = JsonConvert.SerializeObject(actionData);
+            requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                statusMessage = "Light turned on!";
+                var light = lights.FirstOrDefault(l => l.Id == lightId && l.Channel == lightChannel);
+                if (light != null)
+                {
+                    light.IsOff = false;
+                }
+            }
+            else
+            {
+                statusMessage = "Failed to turn on the light. Status code: " + response.StatusCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    public async Task doAction(string lightId, string lightChannel)
+    {
+        await TurnOnLight(lightId, lightChannel);
+        await UpdateLightStatuses();
+        StateHasChanged();
+    }
+
+    private async Task TurnOffLight(string lightId, string lightChannel)
+    {
+        Console.WriteLine("test");
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
+
+            var actionData = new
+            {
+                address = lightId,
+                channel = lightChannel,
+                action = 0
+            };
+
+            var json = JsonConvert.SerializeObject(actionData);
+            requestMessage.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            requestMessage.Headers.Add("Authorization", "Bearer " + jwtToken);
+
+            var response = await client.SendAsync(requestMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                statusMessage = "Light turned off!";
+                var light = lights.FirstOrDefault(l => l.Id == lightId && l.Channel == lightChannel);
+                if (light != null)
+                {
+                    light.IsOff = true;
+                }
+            }
+            else
+            {
+                statusMessage = "Failed to turn off the light. Status code: " + response.StatusCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+}

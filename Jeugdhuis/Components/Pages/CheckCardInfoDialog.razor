@@ -1,11 +1,11 @@
-﻿@page "/pay-with-card-dialog"
+﻿@page "/check-card-info-dialog"
 @using Jeugdhuis.Models
 @using Microsoft.EntityFrameworkCore
 @inject DialogService DialogService
 @inject AppDbContext _dbContext
 @inject NfcService NfcService
 
-<RadzenFieldset Text="Betaal met lidkaart">
+<RadzenFieldset Text="Van wie is deze lidkaart?">
     <p>@statusMessage</p>
     <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
@@ -87,12 +87,9 @@
         try
         {
             card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
-        }
-        catch
+        } catch (Exception e)
         {
-            card = new NfcCard();
-            card.CardId = detectedCardUid;
-            Console.WriteLine("Deze kaart is kan niet gevonden worden in ons systeem.");
+            Console.WriteLine(e);    
         }
 
         NfcService.StopListening();
