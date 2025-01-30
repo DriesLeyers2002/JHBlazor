@@ -1,0 +1,106 @@
+﻿@page "/bestelling"
+@using Jeugdhuis.Models
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@inject AppDbContext _dbContext
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@rendermode InteractiveServer
+
+<PageTitle>Bestelling</PageTitle>
+
+<h1>Bestelling</h1>
+<RadzenDatePicker @bind-Value=@currentDate Name="RadzenDatePickerBindValue" DateFormat="MM/dd/yyyy" Change="() => updateOrdersTime()" ShowCalendarWeek />
+
+<RadzenDataGrid @ref="grid" Data="@Order" TItem="Order" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="Order" Property="Id" Title="ID" Width="50px" />
+        <RadzenDataGridColumn TItem="Order" Property="TotalAmount" Title="TotalAmount">
+            <Template Context="data">
+                @($"€{(data.TotalAmount):0.00}")
+            </Template>
+            <FooterTemplate>
+                Totaal: @($"€{getTotalpayments():0.00}")
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Order" Property="Quantity" Title="Quantity">
+            <Template Context="data">
+                @(getQuantity(data))
+            </Template>
+            <FooterTemplate>
+                Totaal: @getTotalQuantity()
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Order" Property="OrderDate" Title="OrderDate" />
+
+        <RadzenDataGridColumn TItem="Order" Title="Acties" Width="100px">
+            <Template Context="data">
+                <RadzenButton Icon="key" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
+                              Click="@(args => OpenOrderItemDialog(data))" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    public DateTime currentDate = DateTime.Now;
+    private ICollection<Order> Order;
+    private RadzenDataGrid<Order> grid;
+    private List<Order> allOrders = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        try
+        {
+            allOrders = await _dbContext.Orders.Include(order => order.OrderItems).ToListAsync();
+            updateOrdersTime();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching Order: {ex.Message}");
+        }
+    }
+
+    public void updateOrdersTime()
+    {
+        Order = allOrders.Where(x => DateOnly.FromDateTime(currentDate) == DateOnly.FromDateTime(x.OrderDate)).ToList();
+    }
+
+    public int getQuantity(Order order)
+    {
+        return order.OrderItems.Sum(x => x.Quantity);
+    }
+
+    public double getTotalpayments()
+    {
+        if (Order != null)
+        {
+            return Order.Sum(x => x.TotalAmount);
+        }
+
+        return 0;
+    }
+
+    public double getTotalQuantity()
+    {
+        if (Order != null)
+        {
+            return Order.Sum(x => x.OrderItems.Sum(x => x.Quantity));
+        }
+
+        return 0;
+    }
+
+    private void OpenOrderItemDialog(Order order)
+    {
+        DialogService.Open<OrderItemDialog>("Bestelling drankjes", new Dictionary<string, object>
+        {
+            { "Order", order }
+        });
+    }
+}

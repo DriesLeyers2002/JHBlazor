@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<Boardmember>
     public DbSet<Boardmember> Boardmembers { get; set; }
     public DbSet<Category> Category { get; set; }
     public DbSet<NfcCard> NfcCards { get; set; }
+    public DbSet<Order> Orders { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -66,6 +67,26 @@ public class AppDbContext : IdentityDbContext<Boardmember>
             entity.Property(c => c.Id).ValueGeneratedOnAdd();
             entity.Property(c => c.Name).IsRequired();
             entity.Property(c => c.Color).IsRequired();
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.Id).ValueGeneratedOnAdd();
+            entity.HasMany(o => o.OrderItems)
+                  .WithOne()
+                  .HasForeignKey(oi => oi.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(oi => oi.Id);
+            entity.Property(oi => oi.Id).ValueGeneratedOnAdd();
+            entity.HasOne(oi => oi.Drink)
+                  .WithMany()
+                  .HasForeignKey(oi => oi.DrinkId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Category>().HasData(
@@ -198,6 +219,58 @@ public class AppDbContext : IdentityDbContext<Boardmember>
            new IdentityUserRole<string> { UserId = vincent.Id, RoleId = adminRole.Id },
            new IdentityUserRole<string> { UserId = simon.Id, RoleId = drankmeesterRole.Id },
            new IdentityUserRole<string> { UserId = simon.Id, RoleId = adminRole.Id }
-   );
+        );
+
+        modelBuilder.Entity<Order>().HasData(
+        new Order
+        {
+            Id = 1,
+            OrderDate = DateTime.UtcNow.AddDays(-3),
+            TotalAmount = 7.50,
+            UserId = "Dries"
+        },
+        new Order
+        {
+            Id = 2,
+            OrderDate = DateTime.UtcNow.AddDays(-2),
+            TotalAmount = 24.00,
+            UserId = "Vincent"
+        },
+        new Order
+        {
+            Id = 3,
+            OrderDate = DateTime.UtcNow.AddDays(-1),
+            TotalAmount = 4.50,
+            UserId = "Simon"
+        },
+        new Order
+        {
+            Id = 4,
+            OrderDate = DateTime.UtcNow.AddHours(-5),
+            TotalAmount = 7.50,
+            UserId = "Dries"
+        },
+        new Order
+        {
+            Id = 5,
+            OrderDate = DateTime.UtcNow.AddHours(-2),
+            TotalAmount = 21.00,
+            UserId = "Vincent"
+        }
+        );
+
+        modelBuilder.Entity<OrderItem>().HasData(
+            new OrderItem { Id = 1, OrderId = 1, DrinkId = 1, Quantity = 2, PriceAtPurchase = 3.00 },
+            new OrderItem { Id = 2, OrderId = 1, DrinkId = 7, Quantity = 1, PriceAtPurchase = 1.50 },
+            new OrderItem { Id = 3, OrderId = 2, DrinkId = 5, Quantity = 3, PriceAtPurchase = 3.00 },
+            new OrderItem { Id = 4, OrderId = 2, DrinkId = 12, Quantity = 1, PriceAtPurchase = 15.00 },
+            new OrderItem { Id = 5, OrderId = 3, DrinkId = 30, Quantity = 2, PriceAtPurchase = 1.50 },
+            new OrderItem { Id = 6, OrderId = 3, DrinkId = 20, Quantity = 1, PriceAtPurchase = 1.50 },
+            new OrderItem { Id = 7, OrderId = 4, DrinkId = 2, Quantity = 2, PriceAtPurchase = 3.00 },
+            new OrderItem { Id = 8, OrderId = 4, DrinkId = 3, Quantity = 1, PriceAtPurchase = 1.50 },
+            new OrderItem { Id = 9, OrderId = 5, DrinkId = 12, Quantity = 1, PriceAtPurchase = 15.00 },
+            new OrderItem { Id = 10, OrderId = 5, DrinkId = 13, Quantity = 2, PriceAtPurchase = 3.00 }
+        );
+
     }
 }

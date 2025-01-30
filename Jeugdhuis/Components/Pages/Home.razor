@@ -11,6 +11,7 @@
 @inject PayconiqService PayconiqService
 @inject NavigationManager Navigation
 @inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Menu</PageTitle>
 
@@ -380,6 +381,10 @@
         else if (type == PaymentType.Lidkaart)
         {
             paymentId = await OpenPaymentDialog();
+        } 
+        else if (type == PaymentType.Cash)
+        {
+            saveOrder();
         }
 
         orders.Clear();
@@ -433,6 +438,8 @@
                         Summary = "Betaling gelukt!",
                         Detail = $"{result.User.FirstName} {result.User.LastName} heeft met succes betaald met zijn/haar lidkaart. Nieuwe balans is: €{result.Balance}."
                     });
+
+                    saveOrder();
 
                     return result.CardId;
                 }
@@ -522,11 +529,12 @@
     {
         if (this.paymentId == paymentId)
         {
+            saveOrder();
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling voltooid" });
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "eee idk" });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Er is iets heel raar gebeurt met betaling" });
         }
     }
 
@@ -540,5 +548,28 @@
             await _hubConnection.StopAsync();
             await _hubConnection.DisposeAsync();
         }
+    }
+
+    public async void saveOrder()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var isAuthenticated = authState.User.Identity.IsAuthenticated;
+        var userId = authState.User.Identity.Name;
+
+        List<OrderItem> orderItems = new List<OrderItem>();
+
+        foreach (var drinkItems in orders)
+        {
+            var drink = drinkItems.Key;
+            var amount = drinkItems.Value;
+
+            OrderItem item = new OrderItem(drink.Id, drink, amount, drink.Price);
+            orderItems.Add(item);
+        }
+
+        Order order = new Order(DateTime.Now, bill, orderItems, userId);
+
+        _dbContext.Add(order);
+        await _dbContext.SaveChangesAsync();
     }
 }
