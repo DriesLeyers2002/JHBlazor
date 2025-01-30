@@ -1,6 +1,8 @@
 ﻿@page "/lichten"
 @inject IHttpClientFactory HttpClientFactory
 @using Newtonsoft.Json;
+@using Radzen
+@using Radzen.Blazor
 
 <h3>Lichten</h3>
 
@@ -19,8 +21,17 @@ else
         {
             <li>
                 @light.Name
-                <button @onclick="() => TurnOffLight(light.Id, light.Channel)" disabled="@light.IsOn">Turn Off</button>
-                <button @onclick="() => TurnOnLight(light.Id, light.Channel)" disabled="@( !light.IsOn)">Turn On</button>
+                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@light.IsOn" Text="Zet uit" ButtonStyle="ButtonStyle.Success"
+                              Click="() =>  TurnOffLight(light.Id, light.Channel)" />
+                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Danger"
+                              @onclick="Test" />
+                <RadzenButton Icon="delete" Style="margin-right: 5px" @key="@light.Id" Disabled="@(!light.IsOn)" Text="Zet aan" ButtonStyle="ButtonStyle.Danger"
+                              Click="Test" />
+
+                <RadzenButton Text="Aan"
+                              ButtonStyle="ButtonStyle.Base"
+                              Click="Test" />
+
             </li>
         }
     </ul>
@@ -35,9 +46,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await GetJwtToken();  
+        await GetJwtToken();
         await LoadLights();
-        await UpdateLightStatuses();  
+        await UpdateLightStatuses();
     }
 
     private async Task GetJwtToken()
@@ -150,8 +161,8 @@ else
 
                 var actionData = new
                 {
-                    address = light.Id, 
-                    channel = light.Channel         
+                    address = light.Id,
+                    channel = light.Channel
                 };
 
                 var json = JsonConvert.SerializeObject(actionData);
@@ -176,7 +187,13 @@ else
         }
     }
 
-    private async Task TurnOnLight(string lightId, string lightChannel)
+
+    public void Test()
+    {
+        Console.WriteLine("test");
+    }
+
+    public async Task TurnOnLight(string lightId, string lightChannel)
     {
 
         Console.WriteLine("test");
@@ -185,12 +202,11 @@ else
             var client = HttpClientFactory.CreateClient();
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://jeugdhuisdecaravan.mydobiss.com/api/local/action");
 
-           
             var actionData = new
             {
-                address = lightId,  
-                channel = lightChannel,       
-                action = 1      
+                address = lightId,
+                channel = lightChannel,
+                action = 1
             };
 
             var json = JsonConvert.SerializeObject(actionData);
@@ -221,6 +237,8 @@ else
 
     private async Task TurnOffLight(string lightId, string lightChannel)
     {
+        Console.WriteLine("test");
+
         try
         {
             var client = HttpClientFactory.CreateClient();
@@ -228,9 +246,9 @@ else
 
             var actionData = new
             {
-                address = lightId, 
-                channel = lightChannel,     
-                action = 0         
+                address = lightId,
+                channel = lightChannel,
+                action = 0
             };
 
             var json = JsonConvert.SerializeObject(actionData);
@@ -245,7 +263,7 @@ else
                 var light = lights.FirstOrDefault(l => l.Id == lightId);
                 if (light != null)
                 {
-                    light.IsOn = false; 
+                    light.IsOn = false;
                 }
             }
             else
