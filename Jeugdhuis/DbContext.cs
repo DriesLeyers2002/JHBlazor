@@ -227,35 +227,50 @@ public class AppDbContext : IdentityDbContext<Boardmember>
             Id = 1,
             OrderDate = DateTime.UtcNow.AddDays(-3),
             TotalAmount = 7.50,
-            UserId = "Dries"
+            UserId = "Dries",
+            PaymentType = PaymentType.Payconiq,
+            CardId = "",
+            BuyerName = "Lewis"
         },
         new Order
         {
             Id = 2,
             OrderDate = DateTime.UtcNow.AddDays(-2),
             TotalAmount = 24.00,
-            UserId = "Vincent"
+            UserId = "Vincent",
+            PaymentType = PaymentType.Lidkaart,
+            CardId = "321",
+            BuyerName = "Willie"
         },
         new Order
         {
             Id = 3,
             OrderDate = DateTime.UtcNow.AddDays(-1),
             TotalAmount = 4.50,
-            UserId = "Simon"
+            UserId = "Simon",
+            PaymentType = PaymentType.Lidkaart,
+            CardId = "31",
+            BuyerName = "Peters"
         },
         new Order
         {
             Id = 4,
             OrderDate = DateTime.UtcNow.AddHours(-5),
             TotalAmount = 7.50,
-            UserId = "Dries"
+            UserId = "Dries",
+            PaymentType = PaymentType.Cash,
+            CardId = "",
+            BuyerName = "Doe"
         },
         new Order
         {
             Id = 5,
             OrderDate = DateTime.UtcNow.AddHours(-2),
             TotalAmount = 21.00,
-            UserId = "Vincent"
+            UserId = "Vincent",
+            PaymentType = PaymentType.Payconiq,
+            CardId = "",
+            BuyerName = "Jhon"
         }
         );
 

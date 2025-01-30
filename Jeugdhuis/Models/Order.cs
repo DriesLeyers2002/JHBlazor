@@ -7,24 +7,31 @@
         public double TotalAmount { get; set; }
         public List<OrderItem> OrderItems { get; set; } = new();
         public string UserId { get; set; }
-
+        public PaymentType PaymentType { get; set; }
+        public string CardId { get; set; }
+        public string BuyerName { get; set; }
         public Order() { }
 
-        public Order(DateTime orderDate, double totalAmount, List<OrderItem> orderItems, string userId)
+        public Order(DateTime orderDate, double totalAmount, List<OrderItem> orderItems, string userId, string cardId, PaymentType paymentType, string buyerName)
         {
             OrderDate = orderDate;
             TotalAmount = totalAmount;
             OrderItems = orderItems;
             UserId = userId;
+            CardId = cardId;
+            PaymentType = paymentType;
+            BuyerName = buyerName;
         }
 
-        public Order(int id, DateTime orderDate, double totalAmount, List<OrderItem> orderItems, string userId)
+        public Order(int id, DateTime orderDate, double totalAmount, List<OrderItem> orderItems, string userId, string cardId, PaymentType paymentType)
         {
             Id = id;
             OrderDate = orderDate;
             TotalAmount = totalAmount;
             OrderItems = orderItems;
             UserId = userId;
+            CardId = cardId;
+            PaymentType = paymentType;
         }
     }
 

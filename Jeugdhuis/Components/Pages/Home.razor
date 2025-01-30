@@ -255,13 +255,6 @@
     private List<double> cashAmounts = new List<double> { 0.5, 1, 2, 5, 10, 20, 50 };
     private double paidWith = 0.0;
 
-    private enum PaymentType
-    {
-        Payconiq,
-        Cash,
-        Lidkaart
-    }
-
     protected override async Task OnInitializedAsync()
     {
         await LoadDrinks();
@@ -384,7 +377,7 @@
         } 
         else if (type == PaymentType.Cash)
         {
-            saveOrder();
+            saveOrder(PaymentType.Cash, "");
         }
 
         orders.Clear();
@@ -439,7 +432,7 @@
                         Detail = $"{result.User.FirstName} {result.User.LastName} heeft met succes betaald met zijn/haar lidkaart. Nieuwe balans is: €{result.Balance}."
                     });
 
-                    saveOrder();
+                    saveOrder(PaymentType.Lidkaart, ($"{result.User.FirstName} {result.User.LastName}").Trim());
 
                     return result.CardId;
                 }
@@ -460,7 +453,9 @@
 
     private async Task<string> StartPayment()
     {
-        return (string)(await PayconiqService.CreatePayment(bill))["paymentId"];
+        var temp = (await PayconiqService.CreatePayment(bill));
+        saveOrder(PaymentType.Payconiq, "");
+        return temp.ToString();
     }
 
 
@@ -529,7 +524,6 @@
     {
         if (this.paymentId == paymentId)
         {
-            saveOrder();
             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Betaling voltooid" });
         }
         else
@@ -550,7 +544,7 @@
         }
     }
 
-    public async void saveOrder()
+    public async void saveOrder(PaymentType paymentType, string buyerName, string cardId = "")
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var isAuthenticated = authState.User.Identity.IsAuthenticated;
@@ -567,7 +561,7 @@
             orderItems.Add(item);
         }
 
-        Order order = new Order(DateTime.Now, bill, orderItems, userId);
+        Order order = new Order(DateTime.Now, bill, orderItems, userId, cardId, paymentType, buyerName);
 
         _dbContext.Add(order);
         await _dbContext.SaveChangesAsync();

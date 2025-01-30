@@ -10,12 +10,12 @@
 <PageTitle>Bestelling</PageTitle>
 
 <h1>Bestelling</h1>
-<RadzenDatePicker @bind-Value=@currentDate Name="RadzenDatePickerBindValue" DateFormat="MM/dd/yyyy" Change="() => updateOrdersTime()" ShowCalendarWeek />
+<RadzenDatePicker @bind-Value=@currentDate Name="RadzenDatePickerBindValue" DateFormat="dd/MM/yyyy" Change="() => updateOrdersTime()" ShowCalendarWeek />
 
 <RadzenDataGrid @ref="grid" Data="@Order" TItem="Order" ColumnWidth="200px">
     <Columns>
         <RadzenDataGridColumn TItem="Order" Property="Id" Title="ID" Width="50px" />
-        <RadzenDataGridColumn TItem="Order" Property="TotalAmount" Title="TotalAmount">
+        <RadzenDataGridColumn TItem="Order" Property="TotalAmount" Title="Totaal bedrag">
             <Template Context="data">
                 @($"€{(data.TotalAmount):0.00}")
             </Template>
@@ -23,7 +23,7 @@
                 Totaal: @($"€{getTotalpayments():0.00}")
             </FooterTemplate>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Order" Property="Quantity" Title="Quantity">
+        <RadzenDataGridColumn TItem="Order" Property="Quantity" Title="Hoeveelheid">
             <Template Context="data">
                 @(getQuantity(data))
             </Template>
@@ -31,7 +31,18 @@
                 Totaal: @getTotalQuantity()
             </FooterTemplate>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Order" Property="OrderDate" Title="OrderDate" />
+        <RadzenDataGridColumn TItem="Order" Property="OrderDate" Title="Bestel datum" />
+        <RadzenDataGridColumn TItem="Order" Property="PaymentType" Title="Betalingstype">
+            <Template Context="data">
+                @(data.PaymentType)
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="Order" Title="Naam">
+            <Template Context="data">
+                @(data.BuyerName)
+            </Template>
+        </RadzenDataGridColumn>
 
         <RadzenDataGridColumn TItem="Order" Title="Acties" Width="100px">
             <Template Context="data">
@@ -101,6 +112,6 @@
         DialogService.Open<OrderItemDialog>("Bestelling drankjes", new Dictionary<string, object>
         {
             { "Order", order }
-        });
+        }, new DialogOptions() { Width = "60%", Height = "auto" });
     }
 }
