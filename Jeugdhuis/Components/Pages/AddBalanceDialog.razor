@@ -10,18 +10,20 @@
     <EditForm Model="@nfcCard" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
 
-        <RadzenRow Gap="2rem" RowGap="2rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenNumeric @bind-Value="balanceToAdd"
-                               Placeholder="Voer bedrag in (EUR)"
-                               Min="0"
-                               Max="1000"
-                               Style="width: 100%;"
-                               Step="0.01"
-                               Format="C2" />
-                <ValidationMessage For="@(() => balanceToAdd)" />
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12">
+                <RadzenButton Text="5" Click="() => SetBalance(5)" />
+                <RadzenButton Text="10" Click="() => SetBalance(10)" />
+                <RadzenButton Text="15" Click="() => SetBalance(15)" />
+                <RadzenButton Text="20" Click="() => SetBalance(20)" />
+                <RadzenButton Text="30" Click="() => SetBalance(30)" />
+                <RadzenButton Text="40" Click="() => SetBalance(40)" />
+                <RadzenButton Text="50" Click="() => SetBalance(50)" />
+                <RadzenButton Text="100" Click="() => SetBalance(100)" />
             </RadzenColumn>
         </RadzenRow>
+
+        <p>Geselecteerd bedrag: @balanceToAdd EUR</p>
 
         <RadzenRow Gap="2rem" RowGap="2rem">
             <RadzenColumn Size="12">
@@ -56,7 +58,7 @@
     {
         detectedCardUid = cardInfo;
         isSubmitDisabled = false;
-        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Vul het bedrag in en klik op Opslaan om de kaart te schrijven.";
+        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Kies een bedrag en klik op Opslaan om de kaart te schrijven.";
         InvokeAsync(StateHasChanged);
     }
 
@@ -69,10 +71,16 @@
 
     private async Task HandleValidSubmit()
     {
-        var card = await _dbContext.NfcCards.FirstAsync(x => x.CardId == detectedCardUid);
-        card.Balance += balanceToAdd;
+        nfcCard.CardId = detectedCardUid;
+        nfcCard.Balance = balanceToAdd;
 
-        DialogService.Close(card);
+        DialogService.Close(nfcCard);
+    }
+
+    private void SetBalance(int amount)
+    {
+        balanceToAdd = amount;
+        InvokeAsync(StateHasChanged);
     }
 
     private void CloseDialog()
