@@ -17,6 +17,9 @@
 
 <h1>Menu</h1>
 
+<RadzenButton Text="Controleer kaart"
+              ButtonStyle="ButtonStyle.Success"
+              Click="@OpenAddCardBalanceDialog" />
 <RadzenToggleButton @bind-Value="isParty" Change="CalculateBill" Style="margin-bottom: 5px;" Text="@(isParty ? "Zet feestmodus uit" : "Zet feestmodus aan")" />
 <RadzenToggleButton @bind-Value="isTappersPrijs" Change="CalculateBill" Style="margin-bottom: 5px;" Text="@(isTappersPrijs ? "Zet tappersprijzen uit" : "Zet tappersprijzen aan")" />
 
@@ -630,5 +633,35 @@
 
         _dbContext.Add(order);
         await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task OpenAddCardBalanceDialog()
+    {
+        NfcCard result = await DialogService.OpenAsync<AddBalanceDialog>("Kaart opwaarderen", null,
+            new DialogOptions() { Width = "500px", Height = "400px" });
+
+        if (result != null)
+        {
+            try
+            {
+                NfcCard nfcCard = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == result.CardId);
+
+                nfcCard.Balance += result.Balance;
+
+                _dbContext.NfcCards.Update(nfcCard);
+                await _dbContext.SaveChangesAsync();
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Lidkaart opgewaardeerd!",
+                        Detail = $"U heeft met succes de lidkaart met ID {result.CardId} opgewaardeerd. Nieuwe balans is: €{nfcCard.Balance}."
+                    });
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
+            }
+        }
     }
 }
