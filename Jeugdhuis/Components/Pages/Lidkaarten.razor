@@ -42,8 +42,6 @@
                     <RadzenButton Icon="check" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Success"
                     Click="@(args => ConfirmMakeActive(nfcCard))" />
                 }
-                <RadzenButton Icon="highlight_off" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Danger"
-                Click="@(args => MarkAsLost(nfcCard))" />
                 <RadzenButton Icon="autorenew" Style="margin-right: 5px" ButtonStyle="ButtonStyle.Info"
                 Click="@(args => ConfirmCardRenewal(nfcCard))" />
             </Template>
@@ -195,44 +193,6 @@
 
     }
 
-    private async Task MarkAsLost(NfcCard stolenCard)
-    {
-        stolenCard.IsActive = false;
-
-
-        NfcCard result = await DialogService.OpenAsync<AddNewCardReasonStolenDialog>($"Nieuwe kaart toekennen aan {stolenCard.User.FirstName} {stolenCard.User.LastName}", null,
-            new DialogOptions() { Width = "500px", Height = "400px" });
-
-        if (result != null)
-        {
-            try
-            {
-                _dbContext.NfcCards.Remove(stolenCard);
-
-                result.User = stolenCard.User;
-                result.Balance = stolenCard.Balance;
-
-                _dbContext.NfcCards.Add(result);
-
-                await _dbContext.SaveChangesAsync();
-
-                NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Lidkaart opgewaardeerd!",
-                        Detail = $"U heeft met succes de lidkaart met ID {result.CardId} opgewaardeerd. Nieuwe balans is: €{result.Balance}."
-                    });
-
-                await grid.Reload();
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
-            }
-        }
-
-    }
-
     private async Task OpenAddCardDialog()
     {
         NfcCard result = await DialogService.OpenAsync<AddNfcCardDialog>
@@ -269,6 +229,8 @@
                     {
                         _dbContext.NfcCards.Add(result);
                         await _dbContext.SaveChangesAsync();
+
+                        nfcCards.Add(result);
 
                         NotificationService.Notify(new NotificationMessage
                             {
