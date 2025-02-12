@@ -58,7 +58,15 @@
     {
         detectedCardUid = cardInfo;
         isSubmitDisabled = false;
-        statusMessage = $"Kaart gedetecteerd: {cardInfo}. Kies een bedrag en klik op Opslaan om de kaart te schrijven.";
+
+        var card = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == detectedCardUid);
+
+        if(card != null){
+            statusMessage = $"Kaart gedetecteerd: met ID{cardInfo}. Deze is van: {card.User.FirstName} {card.User.LastName}. Kies een bedrag en klik op Opslaan om de kaart te schrijven.";
+        }else{
+            statusMessage = $"Kaart gedetecteerd: met ID{cardInfo}. Kies een bedrag en klik op Opslaan om de kaart te schrijven.";
+        }
+
         InvokeAsync(StateHasChanged);
     }
 
