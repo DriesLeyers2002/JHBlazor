@@ -87,9 +87,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("GetJwtToken");
         await GetJwtToken();
+
+        Console.WriteLine("LoadLights");
         await LoadLights();
+        
+        Console.WriteLine("SplitList");
         SplitList();
+        
+        Console.WriteLine("UpdateLightStatuses"); // most delay
         await UpdateLightStatuses();
     }
 
