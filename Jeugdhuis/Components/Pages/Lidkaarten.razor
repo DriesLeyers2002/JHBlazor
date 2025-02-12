@@ -29,7 +29,7 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="NfcCard" Property="ExpiryDate" Title="Vervaldatum" />
         <RadzenDataGridColumn TItem="NfcCard" Property="IsActive" Title="Actief" />
-        <RadzenDataGridColumn TItem="NfcCard" Title="Acties" Width="100px">
+        <RadzenDataGridColumn TItem="NfcCard" Title="Acties">
             <Template Context="nfcCard">
                 @if (nfcCard.IsActive)
                 {
@@ -282,7 +282,6 @@
                     NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
                 }
             }
-
         }
     }
 
@@ -292,7 +291,7 @@
     ("Van wie is deze kaart?", null,
     new DialogOptions() { Width = "500px", Height = "400px" });
 
-        if (result != null)
+        if (result != null && result.User != null)
         {
             NotificationService.Notify(new NotificationMessage
                 {
@@ -301,7 +300,7 @@
                     Detail = $"Deze lidkaart is van {result.User.FirstName} {result.User.LastName} met ID {result.CardId}."
                 });
         }
-        else
+        else if (result != null && result.User == null)
         {
             NotificationService.Notify(new NotificationMessage
                 {

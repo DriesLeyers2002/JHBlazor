@@ -24,7 +24,7 @@
 
 <style>
     .rz-dialog-titlebar-icon {
-        display: none !important;
+    display: none !important;
     }
 </style>
 
@@ -82,7 +82,7 @@
 
     private async Task HandleValidSubmit()
     {
-        NfcCard card = null;
+        NfcCard card = new NfcCard();
 
         try
         {
@@ -91,6 +91,8 @@
         {
             Console.WriteLine(e);    
         }
+
+        card.CardId = detectedCardUid;
 
         NfcService.StopListening();
         DialogService.Close(card);
