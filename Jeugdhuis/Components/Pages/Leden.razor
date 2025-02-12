@@ -114,6 +114,8 @@
                             Summary = "Gebruiker met succes toegevoegd!",
                             Detail = $"Er bestond al een lid met naam {result.FirstName} {result.LastName}. Hij/zij is nu ook lid voor het huidige jaar."
                         });
+
+                    users.Add(user);
                 }
             }
             else
