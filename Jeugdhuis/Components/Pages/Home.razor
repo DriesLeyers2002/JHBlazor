@@ -17,8 +17,8 @@
 
 <h1>Menu</h1>
 
-<RadzenToggleButton @bind-Value="isParty" Style="margin-bottom: 5px;" Text="@(isParty ? "Zet feestmodus uit" : "Zet feestmodus aan")" />
-<RadzenToggleButton @bind-Value="isTappersPrijs" Style="margin-bottom: 5px;" Text="@(isTappersPrijs ? "Zet tappersprijzen uit" : "Zet tappersprijzen aan")" />
+<RadzenToggleButton @bind-Value="isParty" Change="CalculateBill" Style="margin-bottom: 5px;" Text="@(isParty ? "Zet feestmodus uit" : "Zet feestmodus aan")" />
+<RadzenToggleButton @bind-Value="isTappersPrijs" Change="CalculateBill" Style="margin-bottom: 5px;" Text="@(isTappersPrijs ? "Zet tappersprijzen uit" : "Zet tappersprijzen aan")" />
 
 <div style="display: flex">
     <div style="width: 70%" class="block">
@@ -54,7 +54,11 @@
                                                   Click="() => IncreaseCount(stock)"
                                                   class="grid-button"
                                                   Style=@($"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};")>
-                                        @if (isTappersPrijs)
+                                        @if (isTappersPrijs && isParty)
+                                        {
+                                            @((MarkupString)$"{stock.Name}<br />{stock.PriceAtParty - 0.5:0.00}")
+                                        }
+                                        else if (isTappersPrijs)
                                         {
                                             @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
                                         }
@@ -80,7 +84,11 @@
                                                       Click="() => IncreaseCount(stock)"
                                                       class="grid-button"
                                                       Style=@($"background-color: {categoryDrinkPair.Key.Color} !important; color: {GetTextColor(categoryDrinkPair.Key.Color)};")>
-                                            @if (isTappersPrijs)
+                                            @if (isTappersPrijs && isParty)
+                                            {
+                                                @((MarkupString)$"{stock.Name}<br />{stock.PriceAtParty - 0.5:0.00}")
+                                            }                                            
+                                            else if (isTappersPrijs)
                                             {
                                                 @((MarkupString)$"{stock.Name}<br />{stock.Price - 0.5:0.00}")
                                             }
@@ -136,7 +144,22 @@
                                 <RadzenButton Click="() => IncreaseCount(order.Key)" Icon="Add" ButtonStyle="ButtonStyle.Base" />
                             </RadzenColumn>
                             <RadzenColumn Size="2">
-                                <RadzenText TextStyle="TextStyle.Body1">€@order.Key.Price.ToString("0.00")</RadzenText>
+                                @if (isTappersPrijs && isParty)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body1">€@((order.Key.PriceAtParty - 0.5).ToString("0.00"))</RadzenText>
+                                }
+                                else if (isTappersPrijs)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body1">€@((order.Key.Price - 0.5).ToString("0.00"))</RadzenText>
+                                }
+                                else if (isParty)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body1">€@order.Key.PriceAtParty.ToString("0.00")</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body1">€@order.Key.Price.ToString("0.00")</RadzenText>
+                                }
                             </RadzenColumn>
                         </RadzenRow>
                     }
@@ -330,7 +353,15 @@
 
     private void CalculateBill()
     {
-        bill = orders.Sum(item => item.Key.Price * item.Value);
+        bill = 0;
+        foreach (var item in orders)
+        {
+            double price = isParty ? item.Key.PriceAtParty : item.Key.Price;
+            double discount = isTappersPrijs ? 0.5 * item.Value : 0;
+
+            bill += (price * item.Value) - discount;
+        }
+
         amount = orders.Sum(item => item.Value);
     }
 
@@ -402,7 +433,7 @@
         else if (type == PaymentType.Lidkaart)
         {
             paymentId = await OpenPaymentDialog();
-        } 
+        }
         else if (type == PaymentType.Cash)
         {
             saveOrder(PaymentType.Cash, "");
@@ -416,9 +447,9 @@
     private async Task<string> OpenPaymentDialog()
     {
         NfcCard result = await DialogService.OpenAsync<PayWithCardDialog>(
-            "Betaling met lidkaart", 
+            "Betaling met lidkaart",
             new Dictionary<string, object> { { "billAmount", bill } },
-            new DialogOptions { Width = "500px", Height = "400px" } 
+            new DialogOptions { Width = "500px", Height = "400px" }
         );
 
         if (result.User != null)
@@ -454,11 +485,11 @@
                     await _dbContext.SaveChangesAsync();
 
                     NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Betaling gelukt!",
-                        Detail = $"{result.User.FirstName} {result.User.LastName} heeft met succes betaald met zijn/haar lidkaart. Nieuwe balans is: €{result.Balance}."
-                    });
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "Betaling gelukt!",
+                            Detail = $"{result.User.FirstName} {result.User.LastName} heeft met succes betaald met zijn/haar lidkaart. Nieuwe balans is: €{result.Balance}."
+                        });
 
                     saveOrder(PaymentType.Lidkaart, ($"{result.User.FirstName} {result.User.LastName}").Trim());
 
@@ -472,7 +503,8 @@
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
             }
-        }else if(result != null)
+        }
+        else if (result != null)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Deze kaart is niet gevonden in ons systeem. VERKOOP DEZE LIEVER!");
         }
