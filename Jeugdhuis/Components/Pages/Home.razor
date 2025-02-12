@@ -362,6 +362,8 @@
             bill += (price * item.Value) - discount;
         }
 
+        bill = Math.Round(bill);
+
         amount = orders.Sum(item => item.Value);
     }
 
