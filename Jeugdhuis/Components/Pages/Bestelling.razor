@@ -79,7 +79,18 @@
 
     public void updateOrdersTime()
     {
-        Order = allOrders.Where(x => DateOnly.FromDateTime(currentDate) == DateOnly.FromDateTime(x.OrderDate)).ToList();
+        DateTime startTime = currentDate.Date.AddHours(6);
+        DateTime endTime = currentDate.Date.AddDays(1).AddHours(6);
+
+        foreach (var dates in allOrders)
+        {
+            if (dates.OrderDate >= startTime && dates.OrderDate < endTime)
+            {
+                Console.WriteLine("test");
+            }
+        }
+
+        Order = allOrders.Where(x => x.OrderDate >= startTime && x.OrderDate < endTime).ToList();
     }
 
     public int getQuantity(Order order)
