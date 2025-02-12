@@ -1,0 +1,31 @@
+# Requirements
+Bestellingen opnemen en betalen via: cash of lidkaart
+Stock bijhouden dus bij bestelling moet de stock aangepast worden buiten bij dingen van tap want dat kunnen we niet bijhouden
+Lidkaart aanmaken en linken aan account dus nieuw object Card met kaartnummer en user
+
+
+Bestelling:
+ - uw bestelling richts
+ - dingen van tap moeten niet eraf indien wordt bestelt
+
+Leden: 
+ - kaart nummer bij gebruiker
+
+Authorisatie
+ - bestuursleden: Boardmember
+ - vrijwillegers
+
+Kaarten:
+ - list gelinkt met Leden
+ - knop kaart payconiqe en cash
+
+midden decemenber
+
+dotnet ef migrations add Lucca
+dotnet ef database drop
+dotnet ef database update
+
+Miss payment history?
+v empty stock
+
+stock create new always
