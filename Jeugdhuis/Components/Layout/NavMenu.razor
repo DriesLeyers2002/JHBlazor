@@ -66,43 +66,6 @@
                 <span class="bi bi-cart-check-fill"></span> Bestellingen
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <RadzenButton Text="Controleer kaart"
-                          ButtonStyle="ButtonStyle.Success"
-                          Click="OpenAddCardBalanceDialog" />
-        </div>
     </nav>
 </div>
 
-@code {
-    private async Task OpenAddCardBalanceDialog()
-    {
-        NfcCard result = await DialogService.OpenAsync<AddBalanceDialog>("Kaart opwaarderen", null,
-            new DialogOptions() { Width = "500px", Height = "400px" });
-
-        if (result != null)
-        {
-            try
-            {
-                NfcCard nfcCard = await _dbContext.NfcCards.Include(x => x.User).FirstAsync(x => x.CardId == result.CardId);
-
-                nfcCard.Balance += result.Balance;
-
-                _dbContext.NfcCards.Update(nfcCard);
-                await _dbContext.SaveChangesAsync();
-
-                NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Lidkaart opgewaardeerd!",
-                        Detail = $"U heeft met succes de lidkaart met ID {result.CardId} opgewaardeerd. Nieuwe balans is: €{nfcCard.Balance}."
-                    });
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Fout", $"Er is een fout opgetreden bij aanmaken van de lidkaart.");
-            }
-        }
-    }
-}
