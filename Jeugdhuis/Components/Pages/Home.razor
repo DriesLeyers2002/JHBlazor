@@ -348,7 +348,7 @@
         }
         else
         {
-            orders.Remove(drink); // Handle removing the drink from orders if null
+            orders.Remove(drink);
         }
 
         CalculateBill();
@@ -365,7 +365,7 @@
             bill += (price * item.Value) - discount;
         }
 
-        bill = Math.Round(bill);
+        bill = Math.Ceiling(bill * 100) / 100;
 
         amount = orders.Sum(item => item.Value);
     }
